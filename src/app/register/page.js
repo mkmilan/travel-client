@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function RegisterPage() {
 	const [username, setUsername] = useState("");
 	const [email, setEmail] = useState("");
@@ -31,16 +33,13 @@ export default function RegisterPage() {
 
 		try {
 			// --- Make API Call ---
-			const res = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ username, email, password }),
-				}
-			);
+			const res = await fetch(`${API_BASE_URL}/auth/register`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ username, email, password }),
+			});
 
 			const data = await res.json();
 

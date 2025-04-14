@@ -12,6 +12,8 @@ import { formatDuration, formatDistance } from "@/utils/formatters";
 import CommentList from "@/components/comments/CommentList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 // --- Dynamically import the Map component ---
 // Ensure it only loads on the client side (ssr: false)
 const TripMap = dynamic(() => import("@/components/map/TripMap"), {
@@ -66,9 +68,7 @@ export default function TripDetailPage() {
 				setError("");
 				try {
 					// Use relative URL if proxying is set up, else full URL
-					const res = await fetch(
-						`${process.env.NEXT_PUBLIC_API_URL}/trips/${tripId}`
-					);
+					const res = await fetch(`${API_BASE_URL}/trips/${tripId}`);
 					const data = await res.json();
 
 					if (!res.ok) {
@@ -97,9 +97,7 @@ export default function TripDetailPage() {
 		setCommentsLoading(true);
 		setCommentsError("");
 		try {
-			const res = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/trips/${tripId}/comments`
-			);
+			const res = await fetch(`${API_BASE_URL}/trips/${tripId}/comments`);
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || "Failed to fetch comments");
 			setComments(data); // Set the fetched comments
@@ -155,15 +153,12 @@ export default function TripDetailPage() {
 		setError(""); // Clear previous errors
 
 		try {
-			const res = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/trips/${tripId}`,
-				{
-					method: "DELETE",
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			);
+			const res = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
+				method: "DELETE",
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			});
 
 			// Check if response is ok OR if it's a 204 No Content
 			if (!res.ok && res.status !== 204) {
@@ -303,10 +298,37 @@ export default function TripDetailPage() {
 				<TripMap simplifiedRouteGeoJson={trip.simplifiedRoute} />
 			</div>
 
-			{/* Photos Section (Placeholder) */}
+			{/* --- Photos Section --- */}
 			<div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
-				<h2 className="text-xl font-semibold text-gray-800 mb-4">Photos</h2>
-				<p className="text-gray-600">Photos coming soon...</p>
+				<h2 className="text-xl font-semibold text-gray-800 mb-4">
+					Photos ({trip.photos?.length || 0})
+				</h2>
+				{trip.photos && trip.photos.length > 0 ? (
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+						{trip.photos.map((photoId) => (
+							<div
+								key={photoId}
+								className="aspect-square overflow-hidden rounded-lg shadow"
+							>
+								<Image
+									// Construct URL to the photo serving endpoint
+									src={`${API_BASE_URL}/photos/${photoId}`}
+									alt={`Trip photo ${photoId}`}
+									width={300} // Provide initial width hint
+									height={300} // Provide initial height hint
+									className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
+									// Add unoptimized if serving directly without Next.js optimization layer
+									// unoptimized
+								/>
+								{/* TODO: Add delete button for owner later */}
+							</div>
+						))}
+					</div>
+				) : (
+					<p className="text-gray-600">No photos uploaded for this trip yet.</p>
+					// Optionally show upload button here for owner
+					// {isOwner && <Link href={`/trips/${tripId}/edit`} className="...">Add Photos</Link>}
+				)}
 			</div>
 
 			{/* Comments Section (Placeholder) */}

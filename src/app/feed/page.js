@@ -10,6 +10,8 @@ export default function FeedPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 
+	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 	useEffect(() => {
 		// Only fetch if token is available (ProtectedRoute handles initial login check)
 		if (token) {
@@ -17,15 +19,12 @@ export default function FeedPage() {
 				setLoading(true);
 				setError("");
 				try {
-					const res = await fetch(
-						`${process.env.NEXT_PUBLIC_API_URL}/trips/feed`,
-						{
-							// Relative URL
-							headers: {
-								Authorization: `Bearer ${token}`,
-							},
-						}
-					);
+					const res = await fetch(`${API_BASE_URL}/trips/feed`, {
+						// Relative URL
+						headers: {
+							Authorization: `Bearer ${token}`,
+						},
+					});
 					const data = await res.json();
 					if (!res.ok) {
 						throw new Error(

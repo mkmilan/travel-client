@@ -11,6 +11,8 @@ import TrackingStatusDisplay from "@/components/tracking/TrackingStatusDisplay";
 import UserNotice from "@/components/tracking/UserNotice";
 import SaveTripForm from "@/components/tracking/SaveTripForm";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function NewTripPage() {
 	const { token } = useAuth();
 	const router = useRouter();
@@ -47,7 +49,7 @@ export default function NewTripPage() {
 		}
 
 		try {
-			const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trips`, {
+			const res = await fetch(`${API_BASE_URL}/trips`, {
 				// Relative URL should work if backend proxying is set up, otherwise use full URL
 				method: "POST",
 				headers: {

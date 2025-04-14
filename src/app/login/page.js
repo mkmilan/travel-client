@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -23,7 +25,7 @@ export default function LoginPage() {
 
 		try {
 			// --- Make API Call ---
-			const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+			const res = await fetch(`${API_BASE_URL}/auth/login`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
