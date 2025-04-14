@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { FaUpload, FaTrash } from "react-icons/fa";
 import Image from "next/image";
+import { SITE_URL, API_URL } from "@/utils/config";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -86,7 +87,7 @@ export default function EditTripPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [tripId, authLoading, loggedInUser, router, token, API_BASE_URL]); // Include token and API_BASE_URL
+	}, [tripId, authLoading, loggedInUser, router, token, API_URL]);
 
 	useEffect(() => {
 		// Only fetch when auth isn't loading and we have the necessary info
@@ -150,7 +151,7 @@ export default function EditTripPage() {
 
 		try {
 			// Use environment variable for API URL
-			const res = await fetch(`${API_BASE_URL}/trips/${tripId}/photos`, {
+			const res = await fetch(`${API_URL}/trips/${tripId}/photos`, {
 				method: "POST",
 				headers: { Authorization: `Bearer ${token}` },
 				body: formData,
@@ -193,7 +194,7 @@ export default function EditTripPage() {
 		try {
 			// Use environment variable for API URL
 			const res = await fetch(
-				`${API_BASE_URL}/trips/${tripId}/photos/${photoIdToDelete}`,
+				`${API_URL}/trips/${tripId}/photos/${photoIdToDelete}`,
 				{
 					method: "DELETE",
 					headers: { Authorization: `Bearer ${token}` },
@@ -242,7 +243,7 @@ export default function EditTripPage() {
 
 		try {
 			// Use environment variable for API URL
-			const res = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
+			const res = await fetch(`${API_URL}/trips/${tripId}`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -263,7 +264,7 @@ export default function EditTripPage() {
 
 			setSuccess("Trip details updated!");
 			setTimeout(() => {
-				router.push(`/trips/${tripId}`);
+				router.push(`${SITE_URL}/trips/${tripId}`);
 			}, 1500);
 		} catch (err) {
 			console.error("Error updating trip details:", err);
@@ -305,7 +306,7 @@ export default function EditTripPage() {
 								>
 									{/* Use img tag directly for simplicity if Next optimization isn't needed for dynamic src */}
 									<img
-										src={`${API_BASE_URL}/photos/${photoId}`} // Construct full URL
+										src={`${API_URL}/photos/${photoId}`} // Construct full URL
 										alt={`Existing trip photo`}
 										className="object-cover w-full h-full rounded-md"
 										loading="lazy" // Lazy load images
@@ -515,7 +516,7 @@ export default function EditTripPage() {
 						<div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-4">
 							<button
 								type="button"
-								onClick={() => router.push(`/trips/${tripId}`)}
+								onClick={() => router.push(`${SITE_URL}/trips/${tripId}`)}
 								className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm"
 								disabled={isSaving}
 							>

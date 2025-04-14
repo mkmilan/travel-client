@@ -12,6 +12,7 @@ import {
 	FaUserCheck,
 	FaUserEdit,
 } from "react-icons/fa";
+import { SITE_URL, API_URL } from "@/utils/config";
 
 // Placeholder loading component
 const LoadingSpinner = () => (
@@ -37,9 +38,7 @@ export default function ProfilePage() {
 				setLoading(true);
 				setError("");
 				try {
-					const res = await fetch(
-						`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`
-					);
+					const res = await fetch(`${API_URL}/users/${userId}`);
 					const data = await res.json();
 
 					if (!res.ok) {
@@ -90,7 +89,7 @@ export default function ProfilePage() {
 		setFollowLoading(true);
 		setError(""); // Clear previous general errors
 
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/follow`;
+		const url = `${API_URL}/users/${userId}/follow`;
 		const method = isFollowing ? "DELETE" : "POST"; // Toggle method
 
 		try {

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatDistance, formatDuration } from "@/utils/formatters";
+
 // Import icons (choose appropriate ones)
 import {
 	FaHeart,
@@ -15,6 +16,7 @@ import {
 	FaRoute,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext";
+import { API_URL } from "@/utils/config";
 
 // Dynamically import MiniMap
 const MiniMap = dynamic(() => import("@/components/map/MiniMap"), {
@@ -53,7 +55,7 @@ export default function TripCard({ trip }) {
 		setLikeError("");
 
 		const method = isLikedByMe ? "DELETE" : "POST";
-		const url = `${process.env.NEXT_PUBLIC_API_URL}/trips/${trip._id}/like`;
+		const url = `${API_URL}/trips/${trip._id}/like`;
 
 		try {
 			const res = await fetch(url, {

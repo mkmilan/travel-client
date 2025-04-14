@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { SITE_URL, API_URL } from "@/utils/config";
 
 // Simple loading indicator
 const LoadingSpinner = () => (
@@ -66,7 +67,7 @@ export default function EditProfilePage() {
 		}
 
 		try {
-			const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+			const res = await fetch(`${API_URL}/users/me`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -90,7 +91,7 @@ export default function EditProfilePage() {
 			setUser(data); // Update context with the response from the server
 			// Redirect back to profile page after a short delay
 			setTimeout(() => {
-				router.push(`/profile/${userId}`);
+				router.push(`${SITE_URL}/profile/${userId}`); //////////////////////////////////////////
 			}, 1500); // 1.5 seconds delay
 		} catch (err) {
 			console.error("Error updating profile:", err);

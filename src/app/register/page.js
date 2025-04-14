@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { SITE_URL, API_URL } from "@/utils/config";
 
 export default function RegisterPage() {
 	const [username, setUsername] = useState("");
@@ -33,7 +32,7 @@ export default function RegisterPage() {
 
 		try {
 			// --- Make API Call ---
-			const res = await fetch(`${API_BASE_URL}/auth/register`, {
+			const res = await fetch(`${API_URL}/auth/register`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -51,7 +50,7 @@ export default function RegisterPage() {
 			// --- Handle Success ---
 			console.log("Registration successful:", data);
 			// Optional: Show a success message before redirecting
-			router.push("/login"); // Redirect to login page on success
+			router.push(`${SITE_URL}/login`); // Redirect to login page on success
 		} catch (err) {
 			// --- Handle Errors ---
 			console.error("Registration failed:", err);
@@ -142,7 +141,7 @@ export default function RegisterPage() {
 				<p className="text-sm text-center text-gray-600">
 					Already have an account?{" "}
 					<Link
-						href="/login"
+						href={`${SITE_URL}/login`}
 						className="font-medium text-indigo-600 hover:text-indigo-500"
 					>
 						Sign in

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { API_URL } from "@/utils/config";
 
 export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 	const [text, setText] = useState("");
@@ -21,17 +22,14 @@ export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 		setError("");
 
 		try {
-			const res = await fetch(
-				`${process.env.NEXT_PUBLIC_API_URL}/trips/${tripId}/comments`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-					body: JSON.stringify({ text: text.trim() }),
-				}
-			);
+			const res = await fetch(`${API_URL}/trips/${tripId}/comments`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({ text: text.trim() }),
+			});
 			const newComment = await res.json();
 
 			if (!res.ok) {

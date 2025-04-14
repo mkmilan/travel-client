@@ -3,14 +3,13 @@ import React, { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TripCard from "@/components/trips/TripCard";
+import { SITE_URL, API_URL } from "@/utils/config";
 
 export default function FeedPage() {
 	const { user, token } = useAuth();
 	const [feedTrips, setFeedTrips] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
-
-	const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 	useEffect(() => {
 		// Only fetch if token is available (ProtectedRoute handles initial login check)
@@ -19,7 +18,7 @@ export default function FeedPage() {
 				setLoading(true);
 				setError("");
 				try {
-					const res = await fetch(`${API_BASE_URL}/trips/feed`, {
+					const res = await fetch(`${API_URL}/trips/feed`, {
 						// Relative URL
 						headers: {
 							Authorization: `Bearer ${token}`,

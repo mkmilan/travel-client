@@ -6,12 +6,12 @@ export default function LandingPage() {
 		// Remove specific background color here, let the body's bg-gray-100 show
 		// Keep vertical padding, adjust horizontal if needed
 		<div className="text-center py-16 px-4">
-			<h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-300">
+			<h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-600">
 				{" "}
 				{/* Darker text for light bg */}
 				Welcome to Motorhome Mapper!
 			</h1>
-			<p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+			<p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
 				{" "}
 				{/* Slightly darker gray */}
 				Your ultimate companion for tracking, mapping, and sharing your

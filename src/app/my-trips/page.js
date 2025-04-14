@@ -5,7 +5,7 @@ import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TripCard from "@/components/trips/TripCard";
-
+import { SITE_URL, API_URL } from "@/utils/config";
 // Loading/Error components can be reused or defined locally
 const LoadingComponent = () => <p>Loading your trips...</p>;
 const ErrorComponent = ({ message }) => (
@@ -30,7 +30,7 @@ export default function MyTripsPage() {
 			setLoading(true);
 			setError("");
 			try {
-				const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/trips/me`, {
+				const res = await fetch(`${API_URL}/trips/me`, {
 					// Relative URL
 					headers: {
 						Authorization: `Bearer ${token}`,

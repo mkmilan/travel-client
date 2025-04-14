@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
 		localStorage.setItem("userData", JSON.stringify(userData));
 		setToken(jwtToken);
 		setUser(userData);
-		router.push("/feed");
+		router.push(`/feed`);
 	};
 
 	// Function to handle logout
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 		localStorage.removeItem("userData");
 		setToken(null);
 		setUser(null);
-		router.push("/");
+		router.push(`/`);
 	};
 
 	// Effect to check authentication status on initial load or refresh

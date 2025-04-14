@@ -10,8 +10,7 @@ import { generateGpxString } from "@/utils/gpxUtils"; // Import the utility
 import TrackingStatusDisplay from "@/components/tracking/TrackingStatusDisplay"; // Import UI components
 import UserNotice from "@/components/tracking/UserNotice";
 import SaveTripForm from "@/components/tracking/SaveTripForm";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { SITE_URL, API_URL } from "@/utils/config";
 
 export default function NewTripPage() {
 	const { token } = useAuth();
@@ -49,7 +48,7 @@ export default function NewTripPage() {
 		}
 
 		try {
-			const res = await fetch(`${API_BASE_URL}/trips`, {
+			const res = await fetch(`${API_URL}/trips`, {
 				// Relative URL should work if backend proxying is set up, otherwise use full URL
 				method: "POST",
 				headers: {
@@ -74,7 +73,7 @@ export default function NewTripPage() {
 			tracker.setTrackedPoints([]);
 			tracker.setElapsedTime(0);
 
-			router.push("/feed"); // Redirect
+			router.push(`${SITE_URL}/feed`);
 		} catch (err) {
 			console.error("Error saving trip:", err);
 			setSaveError(err.message || "An unexpected error occurred.");
