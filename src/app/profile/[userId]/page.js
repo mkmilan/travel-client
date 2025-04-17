@@ -12,7 +12,7 @@ import {
 	FaUserCheck,
 	FaUserEdit,
 } from "react-icons/fa";
-import { SITE_URL, API_URL } from "@/utils/config";
+import { API_URL } from "@/utils/config";
 
 // Placeholder loading component
 const LoadingSpinner = () => (

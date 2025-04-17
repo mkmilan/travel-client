@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { SITE_URL, API_URL } from "@/utils/config";
+import { API_URL } from "@/utils/config";
 
 // Simple loading indicator
 const LoadingSpinner = () => (
@@ -91,7 +91,7 @@ export default function EditProfilePage() {
 			setUser(data); // Update context with the response from the server
 			// Redirect back to profile page after a short delay
 			setTimeout(() => {
-				router.push(`${SITE_URL}/profile/${userId}`); //////////////////////////////////////////
+				router.push(`/profile/${userId}`); //////////////////////////////////////////
 			}, 1500); // 1.5 seconds delay
 		} catch (err) {
 			console.error("Error updating profile:", err);

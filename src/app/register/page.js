@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SITE_URL, API_URL } from "@/utils/config";
+import { API_URL } from "@/utils/config";
 
 export default function RegisterPage() {
 	const [username, setUsername] = useState("");
@@ -50,7 +50,7 @@ export default function RegisterPage() {
 			// --- Handle Success ---
 			console.log("Registration successful:", data);
 			// Optional: Show a success message before redirecting
-			router.push(`${SITE_URL}/login`); // Redirect to login page on success
+			router.push(`/login`); // Redirect to login page on success
 		} catch (err) {
 			// --- Handle Errors ---
 			console.error("Registration failed:", err);
@@ -141,7 +141,7 @@ export default function RegisterPage() {
 				<p className="text-sm text-center text-gray-600">
 					Already have an account?{" "}
 					<Link
-						href={`${SITE_URL}/login`}
+						href={`/login`}
 						className="font-medium text-indigo-600 hover:text-indigo-500"
 					>
 						Sign in

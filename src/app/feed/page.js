@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TripCard from "@/components/trips/TripCard";
-import { SITE_URL, API_URL } from "@/utils/config";
+import { API_URL } from "@/utils/config";
 
 export default function FeedPage() {
 	const { user, token } = useAuth();

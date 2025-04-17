@@ -10,7 +10,7 @@ import { generateGpxString } from "@/utils/gpxUtils"; // Import the utility
 import TrackingStatusDisplay from "@/components/tracking/TrackingStatusDisplay"; // Import UI components
 import UserNotice from "@/components/tracking/UserNotice";
 import SaveTripForm from "@/components/tracking/SaveTripForm";
-import { SITE_URL, API_URL } from "@/utils/config";
+import { API_URL } from "@/utils/config";
 
 export default function NewTripPage() {
 	const { token } = useAuth();
@@ -73,7 +73,7 @@ export default function NewTripPage() {
 			tracker.setTrackedPoints([]);
 			tracker.setElapsedTime(0);
 
-			router.push(`${SITE_URL}/feed`);
+			router.push(`/feed`);
 		} catch (err) {
 			console.error("Error saving trip:", err);
 			setSaveError(err.message || "An unexpected error occurred.");

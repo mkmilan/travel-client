@@ -8,7 +8,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import { formatDuration, formatDistance } from "@/utils/formatters";
-import { SITE_URL, API_URL } from "@/utils/config";
+import { API_URL } from "@/utils/config";
 
 import CommentList from "@/components/comments/CommentList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
@@ -37,7 +37,7 @@ const ErrorComponent = ({ message }) => (
 	<div className="text-center py-10">
 		<p className="text-red-600">Error: {message}</p>
 		<Link
-			href={`${SITE_URL}/feed`}
+			href={`/feed`}
 			className="text-blue-600 hover:underline mt-4 inline-block"
 		>
 			Go back to Feed
@@ -182,7 +182,7 @@ export default function TripDetailPage() {
 			console.log("Trip deleted successfully");
 			// alert("Trip deleted successfully!");
 			// Redirect to user's trips page or feed
-			router.push(`${SITE_URL}/my-trips`);
+			router.push(`/my-trips`);
 		} catch (err) {
 			console.error("Error deleting trip:", err);
 			setError(`Delete failed: ${err.message || "An unknown error occurred."}`);
@@ -216,14 +216,11 @@ export default function TripDetailPage() {
 						</h1>
 						<div className="flex items-center text-sm text-gray-600">
 							<Link
-								href={`${SITE_URL}/profile/${trip.user._id}`}
+								href={`/profile/${trip.user._id}`}
 								className="flex items-center hover:underline"
 							>
 								<Image
-									src={
-										trip.user.profilePictureUrl ||
-										`${SITE_URL}/default-avatar.png`
-									}
+									src={trip.user.profilePictureUrl || `/default-avatar.png`}
 									alt={trip.user.username}
 									width={24}
 									height={24}
@@ -239,7 +236,7 @@ export default function TripDetailPage() {
 					{isOwner && (
 						<div className="mt-2 sm:mt-0 space-x-2">
 							<Link
-								href={`${SITE_URL}/trips/${tripId}/edit`}
+								href={`/trips/${tripId}/edit`}
 								className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded no-underline"
 							>
 								Edit
@@ -354,7 +351,7 @@ export default function TripDetailPage() {
 				{!loggedInUser && (
 					<p className="text-sm text-gray-500 mb-4">
 						<Link
-							href={`${SITE_URL}/login`}
+							href={`/login`}
 							className="text-blue-600 hover:underline"
 						>
 							Log in
