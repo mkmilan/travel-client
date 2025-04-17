@@ -12,6 +12,7 @@ import {
 	FaUserPlus,
 	FaListAlt,
 	FaSignOutAlt,
+	FaSearch,
 } from "react-icons/fa"; // Example: Font Awesome icons
 import { MdAddLocationAlt } from "react-icons/md"; // Example: Material Design
 
@@ -77,13 +78,19 @@ export default function Navbar() {
 								href="/trips/new"
 								icon={MdAddLocationAlt}
 							>
-								Record
+								{/* Record */}
 							</NavLink>
 							<NavLink
 								href="/my-trips"
 								icon={FaListAlt}
 							>
-								Trips
+								{/* Trips */}
+							</NavLink>
+							<NavLink
+								href="/search"
+								icon={FaSearch}
+							>
+								{/* Trips */}
 							</NavLink>
 							{user && (
 								<NavLink
@@ -98,7 +105,7 @@ export default function Navbar() {
 								icon={FaSignOutAlt}
 								className="bg-red-600/80 hover:bg-red-700/90"
 							>
-								Logout
+								{/* Logout */}
 							</NavButton>
 						</>
 					) : (

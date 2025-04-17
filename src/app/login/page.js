@@ -16,34 +16,63 @@ export default function LoginPage() {
 		setError("");
 		setLoading(true);
 
-		if (!email || !password) {
-			setError("Please provide email and password.");
-			setLoading(false);
-			return;
-		}
-
 		try {
-			// --- Make API Call ---
+			// Client-side validation
+			if (!email || !password) {
+				setError("Please provide email and password.");
+				setLoading(false);
+				return;
+			}
+
+			// Make API Call
 			const res = await fetch(`${API_URL}/auth/login`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({ email, password }),
+				// Add timeout to prevent hanging requests
+				signal: AbortSignal.timeout(10000), // 10 second timeout
 			});
 
-			const data = await res.json();
-
-			if (!res.ok) {
-				throw new Error(data.message || `HTTP error! status: ${res.status}`);
+			// Always try to parse JSON, but handle cases where response isn't JSON
+			let data;
+			try {
+				data = await res.json();
+			} catch (parseError) {
+				throw new Error("Unable to connect to server. Please try again later.");
 			}
 
-			console.log("Login successful API response:", data);
+			if (!res.ok) {
+				// Handle specific error cases with friendlier messages
+				if (res.status === 401) {
+					throw new Error("Invalid email or password. Please try again.");
+				} else if (res.status === 400) {
+					throw new Error(
+						data.message || "Please check your information and try again."
+					);
+				} else if (res.status >= 500) {
+					throw new Error("Server error. Please try again later.");
+				} else {
+					throw new Error(data.message || `Error: ${res.status}`);
+				}
+			}
+
+			console.log("Login successful");
 			login(data, data.token);
 		} catch (err) {
-			// --- Handle Errors ---
+			// Handle network errors specifically
+			if (err.name === "AbortError") {
+				setError("Login request timed out. Please try again.");
+			} else {
+				setError(
+					err.message || "An unexpected error occurred. Please try again."
+				);
+			}
 			console.error("Login failed:", err);
-			setError(err.message || "An unexpected error occurred.");
+		} finally {
+			// Always reset loading state, whether successful or not
+			setLoading(false);
 		}
 	};
 
@@ -94,7 +123,25 @@ export default function LoginPage() {
 						/>
 					</div>
 
-					{error && <p className="text-sm text-red-600">{error}</p>}
+					{error && (
+						<div className="p-3 text-sm bg-red-50 border border-red-200 rounded-md text-red-600">
+							<div className="flex items-center">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									className="w-5 h-5 mr-2"
+									viewBox="0 0 20 20"
+									fill="currentColor"
+								>
+									<path
+										fillRule="evenodd"
+										d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+										clipRule="evenodd"
+									/>
+								</svg>
+								{error}
+							</div>
+						</div>
+					)}
 
 					<div>
 						<button
