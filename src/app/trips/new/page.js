@@ -114,7 +114,7 @@ export default function NewTripPage() {
 
 	return (
 		<ProtectedRoute>
-			<div className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-md border border-gray-200 mb-8">
+			<div className="max-w-4xl mx-auto bg-white p-6 md:p-8  shadow-md border border-gray-200 mb-8">
 				{!showSaveForm ? (
 					// --- Tracking View ---
 					<>
@@ -137,7 +137,7 @@ export default function NewTripPage() {
 						)}
 						{/* Tracking Error Display */}
 						{tracker.trackingError && (
-							<p className="text-red-600 mb-4 p-3 bg-red-100 rounded border border-red-400">
+							<p className="text-red-600 mb-4 p-3 bg-red-100  border border-red-400">
 								{tracker.trackingError}
 							</p>
 						)}
@@ -146,14 +146,14 @@ export default function NewTripPage() {
 							{!tracker.isTracking ? (
 								<button
 									onClick={tracker.startTracking}
-									className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold text-lg"
+									className="bg-green-600 hover:bg-green-700 text-white px-6 py-3  font-semibold text-lg"
 								>
 									Start Tracking
 								</button>
 							) : (
 								<button
 									onClick={tracker.stopTracking}
-									className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold text-lg"
+									className="bg-red-600 hover:bg-red-700 text-white px-6 py-3  font-semibold text-lg"
 								>
 									Stop Tracking
 								</button>
@@ -162,7 +162,7 @@ export default function NewTripPage() {
 							{tracker.needsSaving && !tracker.isTracking && (
 								<button
 									onClick={tracker.stopTracking}
-									className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+									className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2  text-sm"
 								>
 									Process Restored Data
 								</button>
@@ -172,7 +172,7 @@ export default function NewTripPage() {
 								!tracker.isTracking && (
 									<button
 										onClick={tracker.addDummyPoints}
-										className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm"
+										className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2  text-sm"
 									>
 										Add Dummy Points (Dev)
 									</button>

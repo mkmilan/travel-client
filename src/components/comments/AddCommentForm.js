@@ -61,14 +61,14 @@ export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 				placeholder="Add your comment..."
 				maxLength={500}
 				required
-				className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+				className="block w-full px-3 py-2 border border-gray-300  shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 			/>
 			{error && <p className="text-red-500 text-xs mt-1">{error}</p>}
 			<div className="flex justify-end mt-2">
 				<button
 					type="submit"
 					disabled={isSubmitting || !text.trim()}
-					className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
+					className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm disabled:opacity-50"
 				>
 					{isSubmitting ? "Posting..." : "Post Comment"}
 				</button>

@@ -20,15 +20,15 @@ export default function CommentList({ comments = [] }) {
 						href={`/profile/${comment.user._id}`}
 						className="flex-shrink-0"
 					>
-						<Image
+						{/* <Image
 							src={comment.user.profilePictureUrl || "/default-avatar.png"}
 							alt={comment.user.username}
 							width={32}
 							height={32}
 							className="rounded-full object-cover"
-						/>
+						/> */}
 					</Link>
-					<div className="flex-grow bg-gray-50 p-3 rounded-md border border-gray-200">
+					<div className="flex-grow bg-gray-50 p-3  border border-gray-200">
 						<div className="flex items-center justify-between mb-1">
 							<Link
 								href={`/profile/${comment.user._id}`}

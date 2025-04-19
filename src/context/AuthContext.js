@@ -8,6 +8,7 @@ const AuthContext = createContext(null);
 // Create a provider component
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
+	// const [profilePicture, setProfilePicture] = useState("/default-avatar.png");
 	const [token, setToken] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const router = useRouter();
@@ -16,7 +17,7 @@ export const AuthProvider = ({ children }) => {
 	const login = (userData, jwtToken) => {
 		console.log("AuthContext: Logging in user", userData);
 		localStorage.setItem("authToken", jwtToken);
-		localStorage.setItem("userData", JSON.stringify(userData));
+		// localStorage.setItem("userData", JSON.stringify(userData));
 		setToken(jwtToken);
 		setUser(userData);
 		router.push(`/feed`);
@@ -24,7 +25,6 @@ export const AuthProvider = ({ children }) => {
 
 	// Function to handle logout
 	const logout = () => {
-		console.log("AuthContext: Logging out user");
 		localStorage.removeItem("authToken");
 		localStorage.removeItem("userData");
 		setToken(null);
@@ -38,12 +38,11 @@ export const AuthProvider = ({ children }) => {
 		const storedToken = localStorage.getItem("authToken");
 		const storedUserData = localStorage.getItem("userData");
 
+		console.log("AuthContext: Stored user data:", storedUserData);
+
 		if (storedToken && storedUserData) {
 			console.log("AuthContext: Found token in localStorage.");
-			// Basic check: Assume token is valid if present.
-			// A more robust check would be to call '/api/auth/me' here
-			// to verify the token with the backend and get fresh user data.
-			// Let's keep it simple for now and trust the stored data.
+
 			try {
 				const parsedUser = JSON.parse(storedUserData);
 				setToken(storedToken);
@@ -54,6 +53,8 @@ export const AuthProvider = ({ children }) => {
 					"AuthContext: Failed to parse user data from localStorage",
 					error
 				);
+				// Clear potentially corrupted data
+
 				logout(); // Clear invalid stored data
 			}
 		} else {
@@ -61,6 +62,23 @@ export const AuthProvider = ({ children }) => {
 		}
 		setLoading(false); // Finished checking auth status
 	}, []); // Empty dependency array means this runs once on mount
+
+	useEffect(() => {
+		if (user) {
+			console.log("AuthContext: Persisting user data to localStorage:", user);
+			localStorage.setItem("userData", JSON.stringify(user));
+		} else {
+			// If user becomes null (e.g., during logout), remove it from storage
+			console.log("AuthContext: Removing user data from localStorage.");
+			localStorage.removeItem("userData");
+		}
+		// Also persist token changes (though less likely to change outside login/logout)
+		if (token) {
+			localStorage.setItem("authToken", token);
+		} else {
+			localStorage.removeItem("authToken");
+		}
+	}, [user, token]); // Run this effect whenever user or token state changes
 
 	// Value provided by the context
 	const authContextValue = {

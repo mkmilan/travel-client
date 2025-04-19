@@ -4,18 +4,17 @@ const nextConfig = {
 		// domains: ["localhost", "https://travel-server-fdxh.onrender.com"],
 		remotePatterns: [
 			{
-				protocol: "http", // Allow http for local development
+				protocol: "http",
 				hostname: "localhost",
-				port: "5001", // Specify the port your local backend runs on
-				pathname: "/api/**", // Be specific about the path
+				port: "5001",
+				pathname: "/api/**",
 			},
 			{
-				protocol: "https", // Allow https for production
-				hostname: "travel-server-fdxh.onrender.com", // Your Render backend hostname
+				protocol: "https",
+				hostname: "travel-server-fdxh.onrender.com",
 				port: "", // Default port (443 for https)
-				pathname: "/api/**", // Be specific about the path
+				pathname: "/api/**",
 			},
-			// Add any other domains you might load images from (e.g., user profile pics from external services)
 		],
 	},
 };

@@ -72,7 +72,7 @@ export default function TripMap({ simplifiedRouteGeoJson }) {
 			zoom={defaultZoom}
 			scrollWheelZoom={true} // Allow scroll wheel zoom
 			style={{ height: "400px", width: "100%" }} // Set map dimensions explicitly
-			className="rounded-lg shadow-md"
+			className=" shadow-md"
 		>
 			{/* Base Map Layer */}
 			<TileLayer

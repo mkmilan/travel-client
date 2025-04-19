@@ -13,7 +13,7 @@ import {
 	FaUserEdit,
 } from "react-icons/fa";
 import { API_URL } from "@/utils/config";
-
+import ProfilePicture from "@/components/ProfilePicture";
 // Placeholder loading component
 const LoadingSpinner = () => (
 	<div className="flex justify-center items-center h-64">
@@ -24,12 +24,17 @@ const LoadingSpinner = () => (
 export default function ProfilePage() {
 	const params = useParams(); // { userId: 'the_actual_id_from_url' }
 	const { userId } = params;
-	const { user: loggedInUser, token, loading: authLoading } = useAuth();
+	const { user, token, loading: authLoading } = useAuth();
 	const [profileData, setProfileData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 	const [isFollowing, setIsFollowing] = useState(false);
 	const [followLoading, setFollowLoading] = useState(false);
+	// const [profilePictureUrl, setProfilePictureUrl] = useState("");
+	// const profilePictureUrl =
+	// 	`${API_URL}/photos/${user?.profilePictureUrl}` || "/default-avatar.png";
+	// console.log("user", user);
+	const loggedInUser = user;
 
 	useEffect(() => {
 		// Fetch profile data when userId is available
@@ -47,6 +52,11 @@ export default function ProfilePage() {
 						);
 					}
 					setProfileData(data);
+					console.log("Fetched profile data:", data);
+					// setProfilePictureUrl(`${API_URL}/photos/${data.profilePictureUrl}`);
+
+					// setProfilePictureUrl(`${API_URL}/${data.profilePictureUrl}`);
+
 					// --- Determine initial follow state ---
 					// Check if loggedInUser exists and if their ID is in the fetched profile's followers list
 					if (loggedInUser && data.followers && Array.isArray(data.followers)) {
@@ -147,22 +157,29 @@ export default function ProfilePage() {
 		month: "long",
 		day: "numeric",
 	});
+	// console.log("profilePictureUrl", profilePictureUrl);
 
 	return (
-		<div className="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-md border border-gray-200">
+		<div className="max-w-4xl mx-auto bg-white p-6 md:p-8  shadow-md border border-gray-200">
 			<div className="flex flex-col md:flex-row items-center md:items-start gap-6">
 				{/* Profile Picture */}
-				<div className="flex-shrink-0">
+				{/* <div className="flex-shrink-0 h-50 w-50 rounded-full overflow-hidden">
 					<Image
-						src={profileData.profilePictureUrl || "/default-avatar.png"} // Provide a default avatar in public folder
+						src={
+							// `${API_URL}/photos/${profileData.profilePictureUrl}}` ||
+							profilePictureUrl || "/default-avatar.png"
+						}
 						alt={`${profileData.username}'s profile picture`}
-						width={150}
-						height={150}
-						className="rounded-full border-4 border-gray-300 object-cover"
+						width={100}
+						height={100}
+						className="rounded-full border-2 border-gray-300 object-cover h-full w-full"
 						priority // Prioritize loading profile image
 					/>
-				</div>
-
+				</div> */}
+				<ProfilePicture
+					size={200}
+					// className="rounded-full border-2 border-gray-300 object-cover h-full w-full"
+				/>
 				{/* Profile Info */}
 				<div className="flex-grow text-center md:text-left">
 					<h1 className="text-3xl font-bold text-gray-900 mb-1">

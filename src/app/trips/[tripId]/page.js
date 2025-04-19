@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import { formatDuration, formatDistance } from "@/utils/formatters";
 import { API_URL } from "@/utils/config";
+import ProfilePicture from "@/components/ProfilePicture";
 
 import CommentList from "@/components/comments/CommentList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
@@ -18,7 +19,7 @@ import AddCommentForm from "@/components/comments/AddCommentForm";
 const TripMap = dynamic(() => import("@/components/map/TripMap"), {
 	ssr: false, // Disable Server-Side Rendering for this component
 	loading: () => (
-		<div className="bg-gray-200 h-80 md:h-96 rounded-lg flex items-center justify-center text-gray-600">
+		<div className="bg-gray-200 h-80 md:h-96 flex items-center justify-center text-gray-600">
 			Loading Map...
 		</div>
 	), // Optional loading indicator
@@ -204,11 +205,12 @@ export default function TripDetailPage() {
 	if (!trip) {
 		return <ErrorComponent message="Trip not found." />;
 	}
+	// console.log("profilePictureUrl", profilePictureUrl);
 
 	return (
 		<div className="max-w-6xl mx-auto p-4">
 			{/* Header Section */}
-			<div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
 					<div>
 						<h1 className="text-3xl font-bold text-gray-900 mb-1">
@@ -217,17 +219,21 @@ export default function TripDetailPage() {
 						<div className="flex items-center text-sm text-gray-600">
 							<Link
 								href={`/profile/${trip.user._id}`}
-								className="flex items-center hover:underline"
+								className="flex items-center  mr-2"
 							>
-								<Image
-									src={trip.user.profilePictureUrl || `/default-avatar.png`}
+								{/* <Image
+									src={`${API_URL}/photos/${loggedInUser?.profilePictureUrl}`}
 									alt={trip.user.username}
 									width={24}
 									height={24}
-									className="rounded-full mr-2 object-cover"
+									className="rounded-full mr-2 object-cover h-full w-full"
+								/> */}
+								<ProfilePicture
+									size={30}
+									className="mr-2"
 								/>
-								<span>{trip.user.username}</span>
 							</Link>
+							<span>{trip.user.username}</span>
 							<span className="mx-2">·</span>
 							<span>{new Date(trip.startDate).toLocaleDateString()}</span>
 						</div>
@@ -293,12 +299,12 @@ export default function TripDetailPage() {
 
 			{/* Map Section (Placeholder) */}
 			<div className=" mb-6">
-				{/* bg-gray-200 h-80 md:h-96 rounded-lg shadow-md flex items-center justify-center text-gray-600 */}
+				{/* bg-gray-200 h-80 md:h-96  shadow-md flex items-center justify-center text-gray-600 */}
 				<TripMap simplifiedRouteGeoJson={trip.simplifiedRoute} />
 			</div>
 
 			{/* --- Photos Section --- */}
-			<div className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-6">
+			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
 				<h2 className="text-xl font-semibold text-gray-800 mb-4">
 					Photos ({trip.photos?.length || 0})
 				</h2>
@@ -307,7 +313,7 @@ export default function TripDetailPage() {
 						{trip.photos.map((photoId) => (
 							<div
 								key={photoId}
-								className="aspect-square overflow-hidden rounded-lg shadow"
+								className="aspect-square overflow-hidden shadow"
 							>
 								<Image
 									// Construct URL to the photo serving endpoint
@@ -333,7 +339,7 @@ export default function TripDetailPage() {
 			{/* Comments Section (Placeholder) */}
 			<div
 				id="comments"
-				className="bg-white p-6 rounded-lg shadow-md border border-gray-200 scroll-mt-20"
+				className="bg-white p-6 shadow-md border border-gray-200 scroll-mt-20"
 			>
 				{" "}
 				{/* Added id and scroll margin */}

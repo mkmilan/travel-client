@@ -99,7 +99,7 @@ export default function TripCard({ trip }) {
 	return (
 		<Link
 			href={`/trips/${trip._id}`}
-			className="block bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 ease-in-out"
+			className="block bg-white  shadow border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 ease-in-out"
 		>
 			<div className="p-4">
 				{/* Header */}
