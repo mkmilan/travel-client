@@ -6,10 +6,12 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { FaHeart, FaRegHeart, FaRegComment } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import { formatDuration, formatDistance } from "@/utils/formatters";
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
+import LikersModal from "@/components/trips/LikersModal";
 
 import CommentList from "@/components/comments/CommentList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
@@ -60,6 +62,17 @@ export default function TripDetailPage() {
 	const [error, setError] = useState("");
 	const [commentsError, setCommentsError] = useState("");
 
+	// State for likes
+	const [localLikesCount, setLocalLikesCount] = useState(0);
+	const [isLikedByMe, setIsLikedByMe] = useState(false);
+	const [likeInProgress, setLikeInProgress] = useState(false);
+
+	// State for Likers Modal
+	const [isLikersModalOpen, setIsLikersModalOpen] = useState(false);
+	const [likers, setLikers] = useState([]);
+	const [likersLoading, setLikersLoading] = useState(false);
+	const [likersError, setLikersError] = useState("");
+
 	// Fetch trip data
 	useEffect(() => {
 		if (tripId) {
@@ -77,6 +90,12 @@ export default function TripDetailPage() {
 						);
 					}
 					setTrip(data);
+					setLocalLikesCount(data.likes?.length || 0);
+					if (loggedInUser && data.likes) {
+						setIsLikedByMe(data.likes.includes(loggedInUser._id));
+					} else {
+						setIsLikedByMe(false);
+					}
 				} catch (err) {
 					console.error("Error fetching trip details:", err);
 					setError(err.message);
@@ -89,7 +108,7 @@ export default function TripDetailPage() {
 			setError("Trip ID missing."); // Should not happen normally
 			setLoading(false);
 		}
-	}, [tripId, authLoading]); // Re-fetch if tripId changes
+	}, [tripId, authLoading, loggedInUser]); // Re-fetch if tripId changes
 
 	const fetchComments = useCallback(async () => {
 		if (!tripId) return;
@@ -192,6 +211,72 @@ export default function TripDetailPage() {
 		// No finally needed if redirecting on success
 	};
 
+	// --- Like/Unlike Handler ---
+	const handleLikeToggle = async () => {
+		if (!loggedInUser || !token) {
+			alert("Please log in to like trips.");
+			return;
+		}
+		if (likeInProgress) return;
+
+		setLikeInProgress(true);
+		const method = isLikedByMe ? "DELETE" : "POST";
+		const url = `${API_URL}/trips/${tripId}/like`;
+
+		try {
+			const res = await fetch(url, {
+				method: method,
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(
+					data.message || `Failed to ${method === "POST" ? "like" : "unlike"}`
+				);
+			}
+
+			// Update UI optimistically
+			setIsLikedByMe(!isLikedByMe);
+			setLocalLikesCount(data.likesCount); // Use count from response
+		} catch (err) {
+			console.error("Like/Unlike error:", err);
+			// Optionally revert optimistic update or show error
+		} finally {
+			setLikeInProgress(false);
+		}
+	};
+
+	// --- Fetch Likers Handler ---
+	const fetchLikers = async () => {
+		if (!tripId) return;
+		console.log(`Fetching likers for trip ${tripId}`);
+		setLikersLoading(true);
+		setLikersError("");
+		setLikers([]); // Clear previous likers
+
+		try {
+			const res = await fetch(`${API_URL}/trips/${tripId}/likers`);
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.message || "Failed to fetch likers");
+			}
+			setLikers(data);
+			console.log("Likers fetched:", data);
+		} catch (err) {
+			console.error("Error fetching likers:", err);
+			setLikersError(err.message);
+		} finally {
+			setLikersLoading(false);
+		}
+	};
+
+	// --- Open Likers Modal Handler ---
+	const handleOpenLikersModal = () => {
+		setIsLikersModalOpen(true);
+		fetchLikers(); // Fetch likers when modal is opened
+	};
+
 	// --- Render Logic ---
 	if (loading || authLoading) {
 		// Wait for both trip data and auth check
@@ -210,6 +295,13 @@ export default function TripDetailPage() {
 	return (
 		<div className="max-w-6xl mx-auto p-4">
 			{/* Header Section */}
+			<LikersModal
+				likers={likers}
+				isOpen={isLikersModalOpen}
+				onClose={() => setIsLikersModalOpen(false)}
+				isLoading={likersLoading}
+				error={likersError}
+			/>
 			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
 					<div>
@@ -221,16 +313,10 @@ export default function TripDetailPage() {
 								href={`/profile/${trip.user._id}`}
 								className="flex items-center  mr-2"
 							>
-								{/* <Image
-									src={`${API_URL}/photos/${loggedInUser?.profilePictureUrl}`}
-									alt={trip.user.username}
-									width={24}
-									height={24}
-									className="rounded-full mr-2 object-cover h-full w-full"
-								/> */}
 								<ProfilePicture
 									size={30}
 									className="mr-2"
+									profilePictureUrl={trip.user.profilePictureUrl}
 								/>
 							</Link>
 							<span>{trip.user.username}</span>
@@ -305,9 +391,9 @@ export default function TripDetailPage() {
 
 			{/* --- Photos Section --- */}
 			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
-				<h2 className="text-xl font-semibold text-gray-800 mb-4">
+				{/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
 					Photos ({trip.photos?.length || 0})
-				</h2>
+				</h2> */}
 				{trip.photos && trip.photos.length > 0 ? (
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
 						{trip.photos.map((photoId) => (
@@ -334,6 +420,51 @@ export default function TripDetailPage() {
 					// Optionally show upload button here for owner
 					// {isOwner && <Link href={`/trips/${tripId}/edit`} className="...">Add Photos</Link>}
 				)}
+			</div>
+
+			{/* --- Like and Comment Counts --- */}
+			<div className="flex items-center space-x-6 text-sm text-gray-600 border-t pt-4">
+				<button
+					onClick={handleLikeToggle}
+					disabled={likeInProgress || !loggedInUser}
+					className={`flex items-center p-1 rounded hover:bg-red-100 disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-150 ${
+						isLikedByMe ? "text-red-500" : "text-gray-500"
+					}`}
+					aria-label={isLikedByMe ? "Unlike trip" : "Like trip"}
+				>
+					{isLikedByMe ? (
+						<FaHeart className="mr-1 h-4 w-4" />
+					) : (
+						<FaRegHeart className="mr-1 h-4 w-4" />
+					)}
+					<span
+						className="font-medium cursor-pointer hover:underline"
+						onClick={(e) => {
+							e.stopPropagation(); // Prevent like toggle if clicking the number
+							handleOpenLikersModal();
+						}}
+						title="View likes"
+					>
+						{localLikesCount} {localLikesCount === 1 ? "like" : "likes"}
+					</span>
+				</button>
+				<a // Use an anchor tag to jump to comments section
+					href="#comments"
+					className="flex items-center hover:underline"
+					onClick={(e) => {
+						// Smooth scroll if possible
+						e.preventDefault();
+						document
+							.getElementById("comments")
+							?.scrollIntoView({ behavior: "smooth" });
+					}}
+				>
+					<FaRegComment className="mr-1 text-blue-500" />
+					<span>
+						{comments?.length ?? trip.commentsCount ?? 0}{" "}
+						{comments?.length === 1 ? "comment" : "comments"}
+					</span>
+				</a>
 			</div>
 
 			{/* Comments Section (Placeholder) */}

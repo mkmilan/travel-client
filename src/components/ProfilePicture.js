@@ -4,16 +4,17 @@ import { API_URL } from "@/utils/config";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-const ProfilePicture = ({ size = 15, className = "" }) => {
+const ProfilePicture = ({ size = 15, className = "", profilePictureUrl }) => {
 	const { user } = useAuth();
 	const [key, setKey] = useState(Date.now());
-	const profile =
-		`${API_URL}/photos/${user?.profilePictureUrl}` || "/default-avatar.png";
+
+	const pictureId = profilePictureUrl || user?.profilePictureUrl;
+	const profileSrc = `${API_URL}/photos/${pictureId}` || "/default-avatar.png";
 
 	useEffect(() => {
 		setKey(Date.now());
-	}, [user?.profilePictureUrl]);
-	console.log("profilePicture URL from Profile picture component", profile);
+	}, [pictureId]);
+	console.log("profilePicture URL from Profile picture component", profileSrc);
 
 	return (
 		<div
@@ -21,7 +22,7 @@ const ProfilePicture = ({ size = 15, className = "" }) => {
 		>
 			<Image
 				key={key}
-				src={profile}
+				src={profileSrc}
 				alt="Profile Picture"
 				width={size}
 				height={size}

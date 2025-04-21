@@ -80,7 +80,7 @@ export default function FeedPage() {
 		if (feedTrips.length === 0) {
 			// TODO: Add better empty state - maybe suggest finding users to follow
 			return (
-				<div className="text-center py-10 bg-white p-6 rounded-lg shadow border border-gray-200">
+				<div className="text-center py-10 bg-white p-6  shadow border border-gray-200">
 					<h2 className="text-xl font-semibold text-gray-700 mb-2">
 						Your Feed is Empty
 					</h2>
