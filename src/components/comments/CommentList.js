@@ -1,52 +1,96 @@
 // src/components/comments/CommentList.jsx
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { FaTrash } from "react-icons/fa";
 
-export default function CommentList({ comments = [] }) {
+export default function CommentList({
+	comments = [],
+	loggedInUser,
+	onDeleteComment,
+	tripId,
+}) {
+	const [deletingId, setDeletingId] = useState(null);
+
 	if (comments.length === 0) {
 		return <p className="text-gray-500 text-sm">No comments yet.</p>;
 	}
+	const handleDeleteClick = async (commentId) => {
+		if (!onDeleteComment || deletingId) return; // Prevent double clicks
+
+		setDeletingId(commentId);
+		try {
+			// Call the handler passed from the parent component
+			await onDeleteComment(commentId);
+			// Parent component should handle state update
+		} catch (error) {
+			// Parent component should handle error display
+			console.error("Error triggered during comment deletion:", error);
+		} finally {
+			setDeletingId(null); // Reset loading state regardless of outcome
+		}
+	};
 
 	return (
 		<div className="space-y-4">
-			{comments.map((comment) => (
-				<div
-					key={comment._id}
-					className="flex items-start space-x-3"
-				>
-					<Link
-						href={`/profile/${comment.user._id}`}
-						className="flex-shrink-0"
+			{comments.map((comment) => {
+				const canDelete = loggedInUser === comment.user._id;
+				console.log("CanDelete:", canDelete);
+				console.log("Comment User ID:", comment.user._id);
+				console.log("LoggedInUser ID:", loggedInUser);
+				console.log("deletingId:", deletingId);
+				console.log("Comment ID:", comment._id);
+				return (
+					<div
+						key={comment._id}
+						className="flex items-start space-x-3"
 					>
-						{/* <Image
+						<Link
+							href={`/profile/${comment.user._id}`}
+							className="flex-shrink-0"
+						>
+							{/* <Image
 							src={comment.user.profilePictureUrl || "/default-avatar.png"}
 							alt={comment.user.username}
 							width={32}
 							height={32}
 							className="rounded-full object-cover"
 						/> */}
-					</Link>
-					<div className="flex-grow bg-gray-50 p-3  border border-gray-200">
-						<div className="flex items-center justify-between mb-1">
-							<Link
-								href={`/profile/${comment.user._id}`}
-								className="text-sm font-semibold text-gray-800 hover:underline"
-							>
-								{comment.user.username}
-							</Link>
-							<span className="text-xs text-gray-400">
-								{new Date(comment.createdAt).toLocaleDateString()}
-							</span>
+						</Link>
+						<div className="flex-grow bg-gray-50 p-3  border border-gray-200">
+							<div className="flex items-center justify-between mb-1">
+								<Link
+									href={`/profile/${comment.user._id}`}
+									className="text-sm font-semibold text-gray-800 hover:underline"
+								>
+									{comment.user.username}
+								</Link>
+								<span className="text-xs text-gray-400">
+									{new Date(comment.createdAt).toLocaleDateString()}
+								</span>
+							</div>
+							<p className="text-sm text-gray-700 whitespace-pre-wrap">
+								{comment.text}
+							</p>
+							{/* Delete Button - Conditionally Rendered */}
+							{canDelete ? (
+								<div
+									onClick={() => handleDeleteClick(comment._id)}
+									disabled={deletingId === comment._id}
+								>
+									<FaTrash className="h-3 w-3" />
+								</div>
+							) : (
+								// Placeholder for non-deletable comments
+								<div className="text-xs text-gray-400">
+									{/* This comment cannot be deleted */}
+								</div>
+							)}
 						</div>
-						<p className="text-sm text-gray-700 whitespace-pre-wrap">
-							{comment.text}
-						</p>
-						{/* TODO: Add Delete button if user owns comment */}
 					</div>
-				</div>
-			))}
+				);
+			})}
 		</div>
 	);
 }

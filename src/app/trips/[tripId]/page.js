@@ -271,6 +271,60 @@ export default function TripDetailPage() {
 		}
 	};
 
+	const handleDeleteComment = async (commentId) => {
+		if (!token) {
+			setCommentsError("Authentication error: Cannot delete comment.");
+			return;
+		}
+		setCommentsError(""); // Clear previous errors
+		try {
+			const res = await fetch(
+				`${API_URL}/trips/${tripId}/comments/${commentId}`,
+				{
+					method: "DELETE",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
+			console.log("Delete comment response:", res);
+			console.log("Delete comment response:", res.comments);
+			if (!res.ok) {
+				let errorData = {
+					message: `Failed to delete comment (${res.status} ${res.statusText})`,
+				};
+				try {
+					// Try parsing JSON error message if available
+					const potentialErrorData = await res.json();
+					if (potentialErrorData.message) {
+						errorData.message = potentialErrorData.message;
+					}
+				} catch (parseError) {
+					console.warn("Could not parse error response as JSON:", parseError);
+					// Use statusText if JSON parsing fails
+					errorData.message = `Failed to delete comment (${res.status} ${res.statusText})`;
+				}
+				throw new Error(errorData.message);
+			} else if (res.status === 200) {
+				// Update comments state optimistically
+				setComments((prevComments) =>
+					prevComments.filter((comment) => comment._id !== commentId)
+				);
+				// Optionally update comment count in trip state if needed elsewhere
+				setTrip((prevTrip) => ({
+					...prevTrip,
+					commentsCount: (prevTrip.commentsCount || 0) - 1, // Decrement count if available
+				}));
+			}
+		} catch (err) {
+			console.error("Error deleting comment:", err);
+			setCommentsError(
+				`Delete failed: ${err.message || "An unknown error occurred."}`
+			);
+		}
+	};
+
+	// --- Fetch Likers on Modal Open ---
 	// --- Open Likers Modal Handler ---
 	const handleOpenLikersModal = () => {
 		setIsLikersModalOpen(true);
@@ -506,7 +560,12 @@ export default function TripDetailPage() {
 						Error loading comments: {commentsError}
 					</p>
 				) : (
-					<CommentList comments={comments} />
+					<CommentList
+						comments={comments}
+						loggedInUser={loggedInUser._id}
+						tripId={tripId}
+						onDeleteComment={handleDeleteComment}
+					/>
 				)}
 			</div>
 		</div>
