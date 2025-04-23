@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaTrash } from "react-icons/fa";
+import ProfilePicture from "../ProfilePicture";
 
 export default function CommentList({
 	comments = [],
@@ -49,28 +50,26 @@ export default function CommentList({
 						<Link
 							href={`/profile/${comment.user._id}`}
 							className="flex-shrink-0"
-						>
-							{/* <Image
-							src={comment.user.profilePictureUrl || "/default-avatar.png"}
+						></Link>
+
+						{/* <ProfilePicture
+							src={comment.user.profilePictureUrl}
 							alt={comment.user.username}
-							width={32}
-							height={32}
-							className="rounded-full object-cover"
+							size={20}
 						/> */}
-						</Link>
 						<div className="flex-grow bg-gray-50 p-3  border border-gray-200">
 							<div className="flex items-center justify-between mb-1">
 								<Link
 									href={`/profile/${comment.user._id}`}
 									className="text-sm font-semibold text-gray-800 hover:underline"
 								>
-									{comment.user.username}
+									<>{comment.user.username}</>
 								</Link>
 								<span className="text-xs text-gray-400">
 									{new Date(comment.createdAt).toLocaleDateString()}
 								</span>
 							</div>
-							<p className="text-sm text-gray-700 whitespace-pre-wrap">
+							<p className="text-sm text-gray-700 whitespace-pre-wrap mb-2">
 								{comment.text}
 							</p>
 							{/* Delete Button - Conditionally Rendered */}
@@ -78,8 +77,9 @@ export default function CommentList({
 								<div
 									onClick={() => handleDeleteClick(comment._id)}
 									disabled={deletingId === comment._id}
+									className="text-gray-500 hover:text-red-600 cursor-pointer"
 								>
-									<FaTrash className="h-3 w-3" />
+									<FaTrash className="h-4 w-4 " />
 								</div>
 							) : (
 								// Placeholder for non-deletable comments
