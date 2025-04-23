@@ -9,16 +9,31 @@ export default function SaveTripForm({
 	onCancel,
 	isSaving,
 	saveError,
+	initialStartLocationName = "",
+	initialEndLocationName = "",
 }) {
 	const [title, setTitle] = useState(initialTitle);
 	const [description, setDescription] = useState("");
-	const [startLocationName, setStartLocationName] = useState("");
-	const [endLocationName, setEndLocationName] = useState("");
+	const [startLocationName, setStartLocationName] = useState(
+		initialStartLocationName
+	);
+	const [endLocationName, setEndLocationName] = useState(
+		initialEndLocationName
+	);
 
 	// Update title if initialTitle prop changes (e.g., after points are loaded)
 	useEffect(() => {
 		setTitle(initialTitle);
 	}, [initialTitle]);
+	// Update start location if prop changes (e.g., after async fetch)
+	useEffect(() => {
+		setStartLocationName(initialStartLocationName);
+	}, [initialStartLocationName]);
+
+	// Update end location if prop changes (e.g., after async fetch)
+	useEffect(() => {
+		setEndLocationName(initialEndLocationName);
+	}, [initialEndLocationName]);
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
@@ -95,8 +110,13 @@ export default function SaveTripForm({
 							value={startLocationName}
 							onChange={(e) => setStartLocationName(e.target.value)}
 							maxLength={100}
-							placeholder="City, State/Region"
+							placeholder={
+								initialStartLocationName === "Fetching..."
+									? "Fetching..."
+									: "City, State/Region"
+							}
 							className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-600"
+							disabled={initialStartLocationName === "Fetching..."}
 						/>
 					</div>
 					<div>
@@ -112,8 +132,13 @@ export default function SaveTripForm({
 							value={endLocationName}
 							onChange={(e) => setEndLocationName(e.target.value)}
 							maxLength={100}
-							placeholder="City, State/Region"
+							placeholder={
+								initialEndLocationName === "Fetching..."
+									? "Fetching..."
+									: "City, State/Region"
+							}
 							className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-600"
+							disabled={initialEndLocationName === "Fetching..."}
 						/>
 					</div>
 				</div>

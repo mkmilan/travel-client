@@ -5,9 +5,10 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
-import { useGpsTracker } from "@/hooks/useGpsTracker"; // Import the custom hook
-import { generateGpxString } from "@/utils/gpxUtils"; // Import the utility
-import TrackingStatusDisplay from "@/components/tracking/TrackingStatusDisplay"; // Import UI components
+import { useGpsTracker } from "@/hooks/useGpsTracker";
+import { generateGpxString } from "@/utils/gpxUtils";
+import TrackingStatusDisplay from "@/components/tracking/TrackingStatusDisplay";
+import { reverseGeocode } from "@/utils/geocoding";
 import UserNotice from "@/components/tracking/UserNotice";
 import SaveTripForm from "@/components/tracking/SaveTripForm";
 import { API_URL } from "@/utils/config";
@@ -21,6 +22,9 @@ export default function NewTripPage() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveError, setSaveError] = useState("");
 	const [gpxData, setGpxData] = useState(null); // Store generated GPX data
+	const [initialStartLocation, setInitialStartLocation] = useState("");
+	const [initialEndLocation, setInitialEndLocation] = useState("");
+	const [isFetchingLocations, setIsFetchingLocations] = useState(false);
 
 	// Generate GPX when tracking stops and data needs saving
 	useEffect(() => {
@@ -32,11 +36,45 @@ export default function NewTripPage() {
 			console.log("Generating GPX data...");
 			const generatedGpx = generateGpxString(tracker.trackedPoints);
 			setGpxData(generatedGpx);
+			setInitialStartLocation("");
+			setInitialEndLocation("");
 		} else {
 			// Clear GPX data if state doesn't warrant it
 			setGpxData(null);
 		}
 	}, [tracker.needsSaving, tracker.trackedPoints, tracker.isTracking]); // Dependencies trigger GPX generation
+
+	useEffect(() => {
+		const fetchLocations = async () => {
+			if (gpxData && tracker.trackedPoints.length > 1) {
+				setIsFetchingLocations(true);
+				setInitialStartLocation("Fetching..."); // Indicate loading
+				setInitialEndLocation("Fetching...");
+
+				const startPoint = tracker.trackedPoints[0];
+				const endPoint =
+					tracker.trackedPoints[tracker.trackedPoints.length - 1];
+
+				try {
+					const [startName, endName] = await Promise.all([
+						reverseGeocode(startPoint.lat, startPoint.lon),
+						reverseGeocode(endPoint.lat, endPoint.lon),
+					]);
+					setInitialStartLocation(startName || "Unknown Location");
+					setInitialEndLocation(endName || "Unknown Location");
+				} catch (error) {
+					console.error("Error fetching locations:", error);
+					setInitialStartLocation("Error fetching");
+					setInitialEndLocation("Error fetching");
+					// Optionally set a specific error message for the user
+				} finally {
+					setIsFetchingLocations(false);
+				}
+			}
+		};
+
+		fetchLocations();
+	}, [gpxData, tracker.trackedPoints]);
 
 	// --- Save Trip API Call Handler ---
 	const handleSaveTrip = async (formData) => {
@@ -88,6 +126,9 @@ export default function NewTripPage() {
 		tracker.setTrackedPoints([]); // Reset points
 		tracker.setElapsedTime(0); // Reset timer
 		tracker.setNeedsSaving(false); // Reset flag
+		setInitialStartLocation(""); // Reset location state on cancel
+		setInitialEndLocation("");
+		setIsFetchingLocations(false);
 		setGpxData(null); // Clear generated GPX
 		setSaveError(""); // Clear save error
 	};
@@ -182,6 +223,11 @@ export default function NewTripPage() {
 				) : (
 					// --- Save Form View ---
 					<>
+						{isFetchingLocations && (
+							<p className="text-center text-gray-600 mb-4">
+								Fetching start/end locations...
+							</p>
+						)}
 						<SaveTripForm
 							initialTitle={initialFormTitle}
 							pointsCount={tracker.trackedPoints.length}
@@ -189,6 +235,8 @@ export default function NewTripPage() {
 							onCancel={handleCancelSave} // Pass the cancel handler (form doesn't need it directly, parent handles actions)
 							isSaving={isSaving}
 							saveError={saveError}
+							initialStartLocationName={initialStartLocation}
+							initialEndLocationName={initialEndLocation}
 						/>
 						{/* Form Actions (Buttons outside the form component) */}
 						<div className="flex justify-end space-x-3 pt-4 mt-4 border-t border-gray-200">
