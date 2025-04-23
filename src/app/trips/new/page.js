@@ -118,7 +118,7 @@ export default function NewTripPage() {
 				{!showSaveForm ? (
 					// --- Tracking View ---
 					<>
-						<h1 className="text-3xl font-bold mb-6 text-gray-900">
+						<h1 className="text-xl text-center font-bold mb-6 text-gray-900">
 							Track New Trip
 						</h1>
 						<UserNotice />

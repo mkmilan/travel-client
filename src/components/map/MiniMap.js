@@ -55,7 +55,7 @@ export default function MiniMap({ simplifiedRouteGeoJson }) {
 			center={defaultCenter}
 			zoom={defaultZoom}
 			style={{ height: "100%", width: "100%" }} // Fill container
-			className="pointer-events-none" // Disable all interactions
+			className="pointer-events-none z-10" // Disable all interactions
 			zoomControl={false}
 			scrollWheelZoom={false}
 			dragging={false}

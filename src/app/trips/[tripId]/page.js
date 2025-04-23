@@ -359,7 +359,7 @@ export default function TripDetailPage() {
 			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
 					<div>
-						<h1 className="text-3xl font-bold text-gray-900 mb-1">
+						<h1 className="text-xl text-center font-bold text-gray-900 mb-1">
 							{trip.title}
 						</h1>
 						<div className="flex items-center text-sm text-gray-600">

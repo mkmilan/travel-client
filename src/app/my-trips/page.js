@@ -62,7 +62,9 @@ export default function MyTripsPage() {
 			<div className="max-w-4xl mx-auto">
 				{" "}
 				{/* Constrain width */}
-				<h1 className="text-3xl font-bold text-gray-900 mb-6">My Trips</h1>
+				<h1 className="text-2xl font-bold text-gray-900 text-center mb-6">
+					My Trips
+				</h1>
 				{trips.length === 0 ? (
 					<p className="text-gray-600 bg-white p-6 rounded-lg shadow border border-gray-200">
 						You haven't saved any trips yet.{" "}

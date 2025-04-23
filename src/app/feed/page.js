@@ -81,7 +81,7 @@ export default function FeedPage() {
 			// TODO: Add better empty state - maybe suggest finding users to follow
 			return (
 				<div className="text-center py-10 bg-white p-6  shadow border border-gray-200">
-					<h2 className="text-xl font-semibold text-gray-700 mb-2">
+					<h2 className="text-xl font-semibold text-gray-700 mb-2 text-center">
 						Your Feed is Empty
 					</h2>
 					<p className="text-gray-500">
@@ -110,7 +110,9 @@ export default function FeedPage() {
 			<div className="max-w-4xl mx-auto">
 				{" "}
 				{/* Constrain width */}
-				<h1 className="text-3xl font-bold text-gray-900 mb-6">Feed</h1>
+				<h1 className="text-xl text-center font-bold text-gray-900 mb-6">
+					Feed
+				</h1>
 				{renderContent()}
 			</div>
 		</ProtectedRoute>
