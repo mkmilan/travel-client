@@ -104,7 +104,7 @@ export default function NewTripPage() {
 			}
 
 			console.log("Trip saved successfully:", savedTripData);
-			alert("Trip saved successfully!");
+			// alert("Trip saved successfully!");
 			tracker.clearSavedTrack(); // Clear localStorage via hook method
 			// Reset component state related to save form visibility/data maybe?
 			tracker.setNeedsSaving(false);
@@ -152,6 +152,8 @@ export default function NewTripPage() {
 
 	// Determine whether to show the Save Form or the Tracking UI
 	const showSaveForm = tracker.needsSaving && gpxData && !tracker.isTracking;
+	console.log("elapsedTime", tracker.elapsedTime);
+	console.log("trackedPoints", tracker.trackedPoints);
 
 	return (
 		<ProtectedRoute>

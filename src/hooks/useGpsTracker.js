@@ -126,6 +126,7 @@ export function useGpsTracker() {
 		setTrackingError("");
 		setTrackedPoints([]);
 		setElapsedTime(0);
+		setStartTime(null); // Explicitly reset startTime for a new session
 		setCurrentPosition(null);
 		setIsTracking(false); // Ensure state is ready
 		setNeedsSaving(false); // Starting fresh
@@ -169,15 +170,6 @@ export function useGpsTracker() {
 						altitude,
 						speed: speedMps,
 					};
-					// setTrackedPoints((prevPoints) => {
-					// 	const newPoint = {
-					// 		lat: latitude,
-					// 		lon: longitude,
-					// 		timestamp,
-					// 		altitude,
-					// 		speed: speedMps
-					// 	};
-					// const newPoints = [...prevPoints, newPoint];
 					setTrackedPoints((prevPoints) => {
 						const newPoints = [...prevPoints, newPoint];
 						// Save state to localStorage using current elapsedTimeRef value
@@ -188,17 +180,21 @@ export function useGpsTracker() {
 						);
 						return newPoints;
 					});
-					// saveTrackToLocalStorage(newPoints); // Save updated points
-					// return newPoints;
 
 					if (!isTracking) {
-						// Start timer/state only once
+						// Should only happen on the very first point OR after an error stopped tracking
 						setIsTracking(true);
-						const now = Date.now();
-						setStartTime(now);
-						setElapsedTime(0);
-						startTimer();
-						console.log("Tracking started.");
+						if (startTime === null) {
+							// Check if this is a brand new tracking session (startTime was reset)
+							const now = Date.now();
+							setStartTime(now);
+							setElapsedTime(0); // Reset time ONLY for a new session
+							console.log("Tracking started for the first time.");
+						} else {
+							// Resuming after a potential temporary error, don't reset time
+							console.log("Tracking resumed.");
+						}
+						startTimer(); // Start/restart the timer regardless
 					}
 				} else {
 					console.warn(`Low accuracy: ${accuracy}m`);
@@ -208,25 +204,37 @@ export function useGpsTracker() {
 				// Error Callback
 				console.error("Geolocation Error:", geoError);
 				let message = "Unknown geolocation error.";
-				// ... (error code handling) ...
+				switch (geoError.code) {
+					case geoError.PERMISSION_DENIED:
+						message = "Geolocation permission denied.";
+						break;
+					case geoError.POSITION_UNAVAILABLE:
+						message = "Location information is unavailable.";
+						break;
+					case geoError.TIMEOUT:
+						message = "Geolocation request timed out.";
+						break;
+				}
 				setTrackingError(message);
 				if (watchIdRef.current !== null) {
 					navigator.geolocation.clearWatch(watchIdRef.current);
 					watchIdRef.current = null;
 				}
 				stopTimer();
-				setIsTracking(false);
+				setIsTracking(false); // Set tracking to false on error
 			},
 			geoOptions
 		);
 	}, [
+		// Keep existing dependencies, adding setStartTime
 		isTracking,
 		startTimer,
 		stopTimer,
 		startTime,
 		saveTrackToLocalStorage,
 		clearSavedTrack,
-	]); // Include isTracking
+		setStartTime, // Add setter dependency (though stable, good practice)
+	]);
 
 	const stopTracking = useCallback(() => {
 		if (watchIdRef.current !== null) {
