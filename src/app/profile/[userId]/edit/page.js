@@ -69,7 +69,7 @@ export default function EditProfilePage() {
 
 		if (file) {
 			// Basic validation (optional: add size/type checks here)
-			if (file.size > 10 * 1024 * 1024) {
+			if (file.size > 50 * 1024 * 1024) {
 				// Example: 10MB limit
 				setError("File size exceeds 10MB limit.");
 				setProfilePictureFile(null); // Clear selection

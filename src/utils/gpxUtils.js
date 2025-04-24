@@ -5,10 +5,7 @@
  * @returns {string} GPX XML string.
  */
 
-export const generateGpxString = (
-	points,
-	tripName = "Motorhome Mapper Track"
-) => {
+export const generateGpxString = (points, tripName = "New Track") => {
 	if (!points || points.length === 0) {
 		return "";
 	}
