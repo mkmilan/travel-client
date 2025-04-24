@@ -20,14 +20,24 @@ export function useGpsTracker() {
 	const [needsSaving, setNeedsSaving] = useState(false); // Flag if restored data needs action
 	const [isInitializing, setIsInitializing] = useState(true); // Loading state
 
+	const elapsedTimeRef = useRef(elapsedTime);
 	const watchIdRef = useRef(null);
 	const timerIntervalRef = useRef(null);
 
+	// Update ref whenever state changes
+	useEffect(() => {
+		elapsedTimeRef.current = elapsedTime;
+	}, [elapsedTime]);
+
 	// --- LocalStorage Handling ---
 	const saveTrackToLocalStorage = useCallback(
-		(points) => {
+		(points, time, trackStartTime) => {
 			// Also save elapsedTime and maybe startTime if needed for resume later
-			const trackData = { points, elapsedTime, startTime };
+			const trackData = {
+				points,
+				elapsedTime: time,
+				startTime: trackStartTime,
+			};
 			try {
 				localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(trackData));
 			} catch (error) {
@@ -35,7 +45,8 @@ export function useGpsTracker() {
 				setTrackingError("Could not save track progress."); // Inform user
 			}
 		},
-		[elapsedTime, startTime]
+		// [elapsedTime, startTime]
+		[]
 	); // Dependencies for data being saved
 
 	const clearSavedTrack = useCallback(() => {
@@ -83,14 +94,25 @@ export function useGpsTracker() {
 
 	// --- Timer ---
 	const startTimer = useCallback(() => {
-		clearInterval(timerIntervalRef.current);
+		// Clear any existing timer before starting a new one
+		if (timerIntervalRef.current) {
+			clearInterval(timerIntervalRef.current);
+			console.log("Cleared existing timer interval.");
+		}
+
+		console.log("Starting timer interval.");
+		// Use the ref for elapsedTime inside the interval to get the latest value
 		timerIntervalRef.current = setInterval(() => {
-			setElapsedTime((prevTime) => prevTime + 1);
+			setElapsedTime((prevTime) => prevTime + 1); // Update state based on previous state
 		}, 1000);
 	}, []);
 
 	const stopTimer = useCallback(() => {
-		clearInterval(timerIntervalRef.current);
+		if (timerIntervalRef.current) {
+			clearInterval(timerIntervalRef.current);
+			timerIntervalRef.current = null; // Clear ref
+			console.log("Stopped timer interval.");
+		}
 	}, []);
 
 	// --- Tracking Control ---
@@ -107,6 +129,7 @@ export function useGpsTracker() {
 		setCurrentPosition(null);
 		setIsTracking(false); // Ensure state is ready
 		setNeedsSaving(false); // Starting fresh
+		stopTimer();
 
 		if (!navigator.geolocation) {
 			setTrackingError("Geolocation not supported.");
@@ -136,20 +159,37 @@ export function useGpsTracker() {
 				const timestamp = position.timestamp;
 				setCurrentPosition({ lat: latitude, lon: longitude, accuracy });
 
+				const speedMps = typeof speed === "number" && speed >= 0 ? speed : null;
 				if (accuracy < 100) {
 					// Use functional update + save to localStorage
+					const newPoint = {
+						lat: latitude,
+						lon: longitude,
+						timestamp,
+						altitude,
+						speed: speedMps,
+					};
+					// setTrackedPoints((prevPoints) => {
+					// 	const newPoint = {
+					// 		lat: latitude,
+					// 		lon: longitude,
+					// 		timestamp,
+					// 		altitude,
+					// 		speed: speedMps
+					// 	};
+					// const newPoints = [...prevPoints, newPoint];
 					setTrackedPoints((prevPoints) => {
-						const newPoint = {
-							lat: latitude,
-							lon: longitude,
-							timestamp,
-							altitude,
-							speed,
-						};
 						const newPoints = [...prevPoints, newPoint];
-						saveTrackToLocalStorage(newPoints); // Save updated points
+						// Save state to localStorage using current elapsedTimeRef value
+						saveTrackToLocalStorage(
+							newPoints,
+							elapsedTimeRef.current,
+							startTime
+						);
 						return newPoints;
 					});
+					// saveTrackToLocalStorage(newPoints); // Save updated points
+					// return newPoints;
 
 					if (!isTracking) {
 						// Start timer/state only once
@@ -183,6 +223,7 @@ export function useGpsTracker() {
 		isTracking,
 		startTimer,
 		stopTimer,
+		startTime,
 		saveTrackToLocalStorage,
 		clearSavedTrack,
 	]); // Include isTracking
@@ -212,10 +253,28 @@ export function useGpsTracker() {
 		clearSavedTrack(); // Clear any real saved track
 		const now = Date.now();
 		const dummyPoints = [
-			{ lat: 50.8713, lon: 4.3758, timestamp: now, altitude: 50 },
-			{ lat: 50.8725, lon: 4.3765, timestamp: now + 30000, altitude: 51 },
-			{ lat: 50.873, lon: 4.3772, timestamp: now + 60000, altitude: 52 },
-			{ lat: 50.8735, lon: 4.3779, timestamp: now + 90000, altitude: 51 },
+			{ lat: 50.8713, lon: 4.3758, timestamp: now, altitude: 50, speed: 5.5 },
+			{
+				lat: 50.8725,
+				lon: 4.3765,
+				timestamp: now + 30000,
+				altitude: 51,
+				speed: 6.5,
+			},
+			{
+				lat: 50.873,
+				lon: 4.3772,
+				timestamp: now + 60000,
+				altitude: 52,
+				speed: 5.1,
+			},
+			{
+				lat: 50.8735,
+				lon: 4.3779,
+				timestamp: now + 90000,
+				altitude: 51,
+				speed: 5.9,
+			},
 		];
 		setTrackedPoints(dummyPoints);
 		setCurrentPosition({
@@ -231,13 +290,20 @@ export function useGpsTracker() {
 	}, [saveTrackToLocalStorage, clearSavedTrack]);
 
 	// Cleanup on unmount
+	// useEffect(() => {
+	// 	return () => {
+	// 		if (watchIdRef.current !== null)
+	// 			navigator.geolocation.clearWatch(watchIdRef.current);
+	// 		clearInterval(timerIntervalRef.current);
+	// 	};
+	// }, []);
 	useEffect(() => {
 		return () => {
 			if (watchIdRef.current !== null)
 				navigator.geolocation.clearWatch(watchIdRef.current);
-			clearInterval(timerIntervalRef.current);
+			stopTimer(); // Ensure timer is cleared on unmount
 		};
-	}, []);
+	}, [stopTimer]);
 
 	// Hook returns state and control methods
 	return {
