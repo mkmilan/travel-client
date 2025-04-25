@@ -381,16 +381,19 @@ export default function TripDetailPage() {
 					{/* Edit/Delete Buttons for Owner */}
 					{isOwner && (
 						<div className="mt-2 sm:mt-0 space-x-2">
-							<Link
-								href={`/trips/${tripId}/edit`}
-								className="text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded no-underline"
-							>
-								Edit
-							</Link>
+							<button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-1 no-underline">
+								<Link
+									href={`/trips/${tripId}/edit`}
+									// className=" text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 no-underline"
+								>
+									Edit
+								</Link>
+							</button>
+
 							<button
 								onClick={handleDeleteTrip} // Attach handler
 								disabled={isDeleting} // Disable while deleting
-								className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+								className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1  disabled:opacity-50"
 							>
 								{isDeleting ? "Deleting..." : "Delete"}
 							</button>

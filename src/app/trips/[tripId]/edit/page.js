@@ -283,7 +283,7 @@ export default function EditTripPage() {
 				{" "}
 				{/* Added padding for mobile */}
 				{/* --- Manage Photos Section --- */}
-				<div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-md border border-gray-200">
+				<div className="bg-white p-4 sm:p-6 md:p-8 shadow-md border border-gray-200">
 					<h2 className="text-xl font-semibold text-gray-800 mb-4">
 						Manage Photos
 					</h2>
@@ -312,12 +312,12 @@ export default function EditTripPage() {
 									<button
 										onClick={() => handleDeletePhoto(photoId)}
 										disabled={isDeletingPhoto === photoId}
-										className="absolute top-1 right-1 bg-red-600/70 hover:bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-200 disabled:opacity-50 z-10"
+										className="absolute top-1 right-1 bg-red-600/80 hover:bg-red-700 text-white p-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-200 disabled:opacity-50 z-10" // Adjusted padding, removed rounded-full
 										title="Delete photo"
 									>
 										{isDeletingPhoto === photoId ? (
 											<svg
-												className="animate-spin h-4 w-4 text-white"
+												className="animate-spin h-4 w-4 text-white" // Adjusted size
 												xmlns="http://www.w3.org/2000/svg"
 												fill="none"
 												viewBox="0 0 24 24"
@@ -337,7 +337,7 @@ export default function EditTripPage() {
 												></path>
 											</svg>
 										) : (
-											<FaTrash className="h-3 w-3" />
+											<FaTrash className="h-4 w-4" /> // Adjusted size
 										)}
 									</button>
 								</div>
@@ -361,7 +361,7 @@ export default function EditTripPage() {
 									className="block text-sm font-medium text-gray-700 mb-1"
 								>
 									Select Photos (up to {5 - existingPhotos.length} more, max
-									10MB each)
+									50MB each)
 								</label>
 								<input
 									ref={fileInputRef}
@@ -371,7 +371,7 @@ export default function EditTripPage() {
 									multiple
 									accept="image/jpeg, image/png, image/gif, image/webp"
 									onChange={handleFileChange}
-									className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+									className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4  file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 								/>
 							</div>
 							{/* File Preview List */}
@@ -393,7 +393,7 @@ export default function EditTripPage() {
 									type="button"
 									onClick={handlePhotoUpload}
 									disabled={isUploading || selectedFiles.length === 0}
-									className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
+									className="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 text-sm disabled:opacity-50" // Removed rounded
 								>
 									<FaUpload className="mr-2" />
 									{isUploading
@@ -416,7 +416,7 @@ export default function EditTripPage() {
 				</div>
 				{/* --- End Photos Section --- */}
 				{/* --- Edit Details Section --- */}
-				<div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-md border border-gray-200">
+				<div className="bg-white p-4 sm:p-6 md:p-8 shadow-md border border-gray-200">
 					<h2 className="text-xl font-semibold text-gray-800 mb-6">
 						Edit Trip Details
 					</h2>
@@ -515,14 +515,14 @@ export default function EditTripPage() {
 							<button
 								type="button"
 								onClick={() => router.push(`/trips/${tripId}`)}
-								className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm"
+								className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 text-sm disabled:opacity-50" // Removed rounded
 								disabled={isSaving}
 							>
 								Cancel
 							</button>
 							<button
 								type="submit"
-								className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
+								className="bg-primary hover:bg-primary-dark text-white px-4 py-2 text-sm disabled:opacity-50" // Use theme colors, removed rounded
 								disabled={isSaving || loading}
 							>
 								{isSaving ? "Saving..." : "Save Changes"}
