@@ -66,7 +66,7 @@ export default function MyTripsPage() {
 					My Trips
 				</h1>
 				{trips.length === 0 ? (
-					<p className="text-gray-600 bg-white p-6 rounded-lg shadow border border-gray-200">
+					<p className="text-gray-600 bg-white p-6 shadow border border-gray-200">
 						You haven't saved any trips yet.{" "}
 						<Link
 							href="/trips/new"

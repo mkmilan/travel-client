@@ -14,7 +14,8 @@ const FitBounds = ({ geoJsonData }) => {
 		if (
 			geoJsonData &&
 			geoJsonData.features &&
-			geoJsonData.features.length > 0
+			geoJsonData.features.length > 0 &&
+			geoJsonData.features[0].geometry?.coordinates?.length >= 2
 		) {
 			try {
 				const geoJsonLayer = L.geoJSON(geoJsonData); // Create temporary layer
@@ -38,7 +39,11 @@ const FitBounds = ({ geoJsonData }) => {
 };
 
 // --- Main Map Component ---
-export default function TripMap({ simplifiedRouteGeoJson }) {
+export default function TripMap({
+	simplifiedRouteGeoJson,
+	interactive = true,
+	className,
+}) {
 	// Define some default map center/zoom if needed
 	const defaultCenter = [51.505, -0.09]; // Example: London
 	const defaultZoom = 6;
@@ -62,17 +67,43 @@ export default function TripMap({ simplifiedRouteGeoJson }) {
 	// Style for the GeoJSON route line
 	const routeStyle = {
 		color: "#3388ff", // Default Leaflet blue
-		weight: 5,
+		weight: interactive ? 5 : 4,
 		opacity: 0.7,
 	};
 
+	// Determine map interaction options based on the 'interactive' prop
+	const mapOptions = interactive
+		? {
+				scrollWheelZoom: true,
+				dragging: true,
+				zoomControl: true,
+				doubleClickZoom: true,
+				attributionControl: true,
+				tap: true,
+		  }
+		: {
+				scrollWheelZoom: false,
+				dragging: false,
+				zoomControl: false,
+				doubleClickZoom: false,
+				attributionControl: false, // Hide attribution on non-interactive maps
+				tap: false, // Disable tap interactions on mobile for preview
+		  };
+
+	// Unique key forces re-initialization when interactivity changes, preventing state issues
+	const mapKey = interactive ? "interactive-map" : "static-map";
 	return (
 		<MapContainer
+			key={mapKey}
 			center={defaultCenter} // Centering will be adjusted by FitBounds
 			zoom={defaultZoom}
 			scrollWheelZoom={true} // Allow scroll wheel zoom
-			style={{ height: "400px", width: "100%" }} // Set map dimensions explicitly
-			className=" shadow-md z-10"
+			// style={{ height: "400px", width: "100%" }} // Set map dimensions explicitly
+			style={{ height: "100%", width: "100%" }}
+			className={`${className} ${
+				!interactive ? "pointer-events-none" : ""
+			} shadow-md z-10`}
+			{...mapOptions}
 		>
 			{/* Base Map Layer */}
 			<TileLayer

@@ -279,10 +279,10 @@ export default function EditTripPage() {
 
 	return (
 		<ProtectedRoute>
-			<div className="max-w-4xl mx-auto space-y-8 p-4 md:p-0">
-				{" "}
-				{/* Added padding for mobile */}
+			{/* Remove p-4 md:p-0 to allow cards to touch edges on mobile */}
+			<div className="max-w-4xl mx-auto space-y-8">
 				{/* --- Manage Photos Section --- */}
+				{/* Card already has internal padding: p-4 sm:p-6 md:p-8 */}
 				<div className="bg-white p-4 sm:p-6 md:p-8 shadow-md border border-gray-200">
 					<h2 className="text-xl font-semibold text-gray-800 mb-4">
 						Manage Photos
@@ -415,7 +415,9 @@ export default function EditTripPage() {
 					)}
 				</div>
 				{/* --- End Photos Section --- */}
+
 				{/* --- Edit Details Section --- */}
+				{/* Card already has internal padding: p-4 sm:p-6 md:p-8 */}
 				<div className="bg-white p-4 sm:p-6 md:p-8 shadow-md border border-gray-200">
 					<h2 className="text-xl font-semibold text-gray-800 mb-6">
 						Edit Trip Details

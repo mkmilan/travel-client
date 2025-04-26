@@ -6,13 +6,19 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { FaHeart, FaRegHeart, FaRegComment } from "react-icons/fa";
+import {
+	FaHeart,
+	FaRegHeart,
+	FaRegComment,
+	FaExpandArrowsAlt,
+	FaMap,
+} from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import { formatDuration, formatDistance } from "@/utils/formatters";
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
 import LikersModal from "@/components/trips/LikersModal";
-
+import Modal from "@/components/Modal";
 import CommentList from "@/components/comments/CommentList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
 
@@ -72,6 +78,8 @@ export default function TripDetailPage() {
 	const [likers, setLikers] = useState([]);
 	const [likersLoading, setLikersLoading] = useState(false);
 	const [likersError, setLikersError] = useState("");
+	// State for Map Modal
+	const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
 	// Fetch trip data
 	useEffect(() => {
@@ -345,9 +353,11 @@ export default function TripDetailPage() {
 		return <ErrorComponent message="Trip not found." />;
 	}
 	// console.log("profilePictureUrl", profilePictureUrl);
+	console.log("TripCard trip:", trip);
 
 	return (
-		<div className="max-w-6xl mx-auto p-4">
+		// Remove p-4 to allow cards to touch edges on mobile
+		<div className="max-w-6xl mx-auto">
 			{/* Header Section */}
 			<LikersModal
 				likers={likers}
@@ -356,7 +366,28 @@ export default function TripDetailPage() {
 				isLoading={likersLoading}
 				error={likersError}
 			/>
-			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
+			{/* --- Map Modal --- */}
+			<Modal
+				isOpen={isMapModalOpen}
+				onClose={() => setIsMapModalOpen(false)}
+				size="screen-h" // Use a large size, but not full screen height initially
+				panelClassName="bg-gray-800" // Dark background for map modal panel
+			>
+				{/* Render the interactive map inside the modal */}
+				{trip?.simplifiedRoute ? (
+					<TripMap
+						simplifiedRouteGeoJson={trip.simplifiedRoute}
+						interactive={true} // Explicitly interactive
+						className=" overflow-hidden" // Add rounding if panel has padding
+					/>
+				) : (
+					<div className="h-full w-full flex items-center justify-center text-gray-400">
+						Route data not available.
+					</div>
+				)}
+			</Modal>
+			{/* Card already has internal padding: p-4 */}
+			<div className="bg-white p-4 shadow-md border border-gray-200 mb-6">
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
 					<div>
 						<h1 className="text-xl text-center font-bold text-gray-900 mb-1">
@@ -440,10 +471,33 @@ export default function TripDetailPage() {
 				)}
 			</div>
 
-			{/* Map Section (Placeholder) */}
-			<div className=" mb-6">
-				{/* bg-gray-200 h-80 md:h-96  shadow-md flex items-center justify-center text-gray-600 */}
-				<TripMap simplifiedRouteGeoJson={trip.simplifiedRoute} />
+			{/* --- Map Preview Section --- */}
+			<div
+				className="mb-6 h-60 md:h-80 relative cursor-pointer group bg-gray-100 shadow-md border border-gray-200" // Adjusted height, added border/shadow
+				onClick={() => trip?.simplifiedRoute && setIsMapModalOpen(true)} // Open modal only if route exists
+				title={
+					trip?.simplifiedRoute
+						? "View interactive map"
+						: "Map preview not available"
+				}
+			>
+				{/* Overlay shown on hover */}
+				{trip?.simplifiedRoute && (
+					<div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-40 transition-colors duration-200 flex items-center justify-center z-20 pointer-events-none">
+						<FaExpandArrowsAlt className="text-white text-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+					</div>
+				)}
+				{/* Render non-interactive map preview */}
+				{trip?.simplifiedRoute ? (
+					<TripMap
+						simplifiedRouteGeoJson={trip.simplifiedRoute}
+						interactive={false} // Render non-interactively
+					/>
+				) : (
+					<div className="h-full w-full flex items-center justify-center text-gray-500 text-sm">
+						Map preview not available
+					</div>
+				)}
 			</div>
 
 			{/* --- Photos Section --- */}
@@ -480,7 +534,7 @@ export default function TripDetailPage() {
 			</div>
 
 			{/* --- Like and Comment Counts --- */}
-			<div className="flex items-center space-x-6 text-sm text-gray-600 border-t pt-4">
+			<div className="flex items-center space-x-6 text-sm text-gray-600 border-t pt-4 px-4 sm:px-6">
 				<button
 					onClick={handleLikeToggle}
 					disabled={likeInProgress || !loggedInUser}
