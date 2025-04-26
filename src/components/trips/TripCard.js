@@ -148,7 +148,7 @@ export default function TripCard({ trip }) {
 			</div>
 
 			{/* Map Preview */}
-			<div className="h-40 w-full bg-gray-100">
+			<div className="h-60 md:h-80 w-full bg-gray-100">
 				{" "}
 				{/* Fixed height container */}
 				<MiniMap simplifiedRouteGeoJson={trip.simplifiedRoute} />

@@ -76,7 +76,7 @@ export default function MyTripsPage() {
 						</Link>
 					</p>
 				) : (
-					<div className="space-y-6">
+					<div className="space-y-6 ">
 						{" "}
 						{/* Increased spacing between cards */}
 						{trips.map((trip) => (

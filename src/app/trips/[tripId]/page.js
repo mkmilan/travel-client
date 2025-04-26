@@ -12,6 +12,9 @@ import {
 	FaRegComment,
 	FaExpandArrowsAlt,
 	FaMap,
+	FaEllipsisV,
+	FaEdit,
+	FaTrash,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import { formatDuration, formatDistance } from "@/utils/formatters";
@@ -21,6 +24,13 @@ import LikersModal from "@/components/trips/LikersModal";
 import Modal from "@/components/Modal";
 import CommentList from "@/components/comments/CommentList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
+import {
+	Menu,
+	MenuButton,
+	MenuItems,
+	MenuItem,
+	Transition,
+} from "@headlessui/react";
 
 // --- Dynamically import the Map component ---
 // Ensure it only loads on the client side (ssr: false)
@@ -388,7 +398,7 @@ export default function TripDetailPage() {
 			</Modal>
 			{/* Card already has internal padding: p-4 */}
 			<div className="bg-white p-4 shadow-md border border-gray-200 mb-6">
-				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+				<div className="flex flex-row justify-between items-start sm:items-center mb-4">
 					<div>
 						<h1 className="text-xl text-center font-bold text-gray-900 mb-1">
 							{trip.title}
@@ -411,8 +421,8 @@ export default function TripDetailPage() {
 					</div>
 					{/* Edit/Delete Buttons for Owner */}
 					{isOwner && (
-						<div className="mt-2 sm:mt-0 space-x-2">
-							<button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-1 no-underline">
+						<div className="relative mt-2 sm:mt-0 space-x-2">
+							{/* <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-1 no-underline">
 								<Link
 									href={`/trips/${tripId}/edit`}
 									// className=" text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 no-underline"
@@ -427,7 +437,72 @@ export default function TripDetailPage() {
 								className="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1  disabled:opacity-50"
 							>
 								{isDeleting ? "Deleting..." : "Delete"}
-							</button>
+							</button> */}
+							<Menu
+								as="div"
+								className="relative inline-block text-left  "
+							>
+								<div>
+									<MenuButton
+										className="cursor-pointer inline-flex justify-center w-full px-2 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75"
+										aria-label="Trip options"
+										disabled={isDeleting} // Disable if delete is in progress
+									>
+										<FaEllipsisV
+											className="w-5 h-5"
+											aria-hidden="true"
+										/>
+									</MenuButton>
+								</div>
+								<Transition
+									enter="transition ease-out duration-100"
+									enterFrom="transform opacity-0 scale-95"
+									enterTo="transform opacity-100 scale-100"
+									leave="transition ease-in duration-75"
+									leaveFrom="transform opacity-100 scale-100"
+									leaveTo="transform opacity-0 scale-95"
+								>
+									<MenuItems className=" absolute right-0 z-20 mt-2 w-40 origin-top-right bg-white divide-y divide-gray-100 shadow-lg ring-1  ring-opacity-50 focus:outline-none">
+										<div className="px-1 py-1">
+											<MenuItem>
+												{({ active }) => (
+													<button
+														onClick={() => router.push(`/trips/${tripId}/edit`)}
+														className={`${
+															active ? "bg-gray-200 " : "text-gray-700"
+														} group flex  items-center w-full px-2 py-2 text-sm cursor-pointer`}
+													>
+														<FaEdit
+															className="w-4 h-4 mr-2"
+															aria-hidden="true"
+														/>
+														Edit
+													</button>
+												)}
+											</MenuItem>
+										</div>
+										<div className="px-1 py-1">
+											<MenuItem>
+												{({ active }) => (
+													<button
+														onClick={handleDeleteTrip}
+														disabled={isDeleting}
+														className={`${
+															active ? "bg-gray-200 " : "text-gray-700" // Use red text for delete
+														} group flex items-center w-full px-2 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+													>
+														<FaTrash
+															className="w-4 h-4 mr-2"
+															aria-hidden="true"
+														/>
+														{isDeleting ? "Deleting..." : "Delete"}
+													</button>
+												)}
+											</MenuItem>
+										</div>
+									</MenuItems>
+								</Transition>
+							</Menu>
 						</div>
 					)}
 					{error && (
@@ -473,7 +548,7 @@ export default function TripDetailPage() {
 
 			{/* --- Map Preview Section --- */}
 			<div
-				className="mb-6 h-60 md:h-80 relative cursor-pointer group bg-gray-100 shadow-md border border-gray-200" // Adjusted height, added border/shadow
+				className="mb-6 h-80 md:h-100 relative cursor-pointer group bg-gray-100 shadow-md border border-gray-200" // Adjusted height, added border/shadow
 				onClick={() => trip?.simplifiedRoute && setIsMapModalOpen(true)} // Open modal only if route exists
 				title={
 					trip?.simplifiedRoute

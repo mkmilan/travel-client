@@ -517,14 +517,14 @@ export default function EditTripPage() {
 							<button
 								type="button"
 								onClick={() => router.push(`/trips/${tripId}`)}
-								className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 text-sm disabled:opacity-50" // Removed rounded
+								className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 text-sm disabled:opacity-50 cursor-pointer" // Removed rounded
 								disabled={isSaving}
 							>
 								Cancel
 							</button>
 							<button
 								type="submit"
-								className="bg-primary hover:bg-primary-dark text-white px-4 py-2 text-sm disabled:opacity-50" // Use theme colors, removed rounded
+								className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm disabled:opacity-50 cursor-pointer " // Use theme colors, removed rounded
 								disabled={isSaving || loading}
 							>
 								{isSaving ? "Saving..." : "Save Changes"}
