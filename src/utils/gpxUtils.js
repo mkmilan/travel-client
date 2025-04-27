@@ -1,12 +1,17 @@
+// filepath: /home/mkmilan/Documents/my/travel-2/client/src/utils/gpxUtils.js
 /**
- * Generates a GPX XML string from an array of track points.
- * @param {Array<object>} points - Array of points, e.g., { lat, lon, timestamp, altitude?, speed? }
+ * Generates a GPX XML string from an array of track points and points of interest.
+ * @param {Array<object>} trackPoints - Array of points, e.g., { lat, lon, timestamp, altitude?, speed? }
+ * @param {Array<object>} pointsOfInterest - Array of POIs, e.g., { lat, lon, timestamp, name?, description? }
  * @param {string} tripName - Optional name for the track segment.
  * @returns {string} GPX XML string.
  */
-
-export const generateGpxString = (points, tripName = "New Track") => {
-	if (!points || points.length === 0) {
+export const generateGpxString = (
+	trackPoints,
+	pointsOfInterest = [], // Add pointsOfInterest parameter
+	tripName = "New Track"
+) => {
+	if (!trackPoints || trackPoints.length === 0) {
 		return "";
 	}
 
@@ -19,15 +24,45 @@ export const generateGpxString = (points, tripName = "New Track") => {
   <metadata>
     <name>${tripName}</name>
     <time>${new Date(
-			points[0].timestamp
+			trackPoints[0].timestamp
 		).toISOString()}</time> {/* Use first point's time */}
-  </metadata>
-  <trk>
+  </metadata>`;
+
+	// Add Waypoints (POIs) - BEFORE the track
+	pointsOfInterest.forEach((poi) => {
+		gpx += `  <wpt lat="${poi.lat}" lon="${poi.lon}">\n`;
+		if (poi.timestamp) {
+			gpx += `    <time>${new Date(poi.timestamp).toISOString()}</time>\n`;
+		}
+		if (poi.name && poi.name.trim() !== "") {
+			// Basic XML escaping for name
+			const escapedName = poi.name
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&apos;");
+			gpx += `    <name>${escapedName}</name>\n`;
+		}
+		if (poi.description && poi.description.trim() !== "") {
+			// Basic XML escaping for description
+			const escapedDesc = poi.description
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;")
+				.replace(/'/g, "&apos;");
+			gpx += `    <desc>${escapedDesc}</desc>\n`;
+		}
+		gpx += `  </wpt>\n`;
+	});
+	// Add Track
+	gpx += `  <trk>
     <name>${tripName}</name>
-    <trkseg>\n`; // Start track segment
+    <trkseg>\n`;
 
 	// Add track points
-	points.forEach((point) => {
+	trackPoints.forEach((point) => {
 		gpx += `      <trkpt lat="${point.lat}" lon="${point.lon}">\n`;
 		if (typeof point.altitude === "number") {
 			gpx += `        <ele>${point.altitude}</ele>\n`;
