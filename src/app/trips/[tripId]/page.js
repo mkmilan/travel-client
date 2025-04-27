@@ -96,6 +96,9 @@ export default function TripDetailPage() {
 	// State for Map Modal
 	const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
+	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+	const [selectedImageUrl, setSelectedImageUrl] = useState("");
+
 	// Fetch trip data
 	useEffect(() => {
 		if (tripId) {
@@ -402,6 +405,27 @@ export default function TripDetailPage() {
 					</div>
 				)}
 			</Modal>
+			{/* --- Image Modal --- */}
+			<Modal
+				isOpen={isImageModalOpen}
+				onClose={() => setIsImageModalOpen(false)}
+				size="screen-h" // Use a large size, adjust as needed
+				panelClassName="bg-black/80 flex items-center justify-center" // Dark background, center content
+			>
+				{selectedImageUrl && (
+					<div className="relative w-full h-full flex items-center justify-center">
+						{/* Image with max height/width to fit modal */}
+						<Image
+							src={selectedImageUrl}
+							alt="Selected trip photo"
+							width={1200} // Provide large width/height hints
+							height={900}
+							className="object-contain max-h-full max-w-full" // Fit within modal bounds
+							// unoptimized // Use if images aren't optimized via Next.js
+						/>
+					</div>
+				)}
+			</Modal>
 			{/* Card already has internal padding: p-4 */}
 			<div className="bg-white p-4 shadow-md border border-gray-200 mb-6">
 				<div className="flex flex-row justify-between items-start sm:items-center mb-4">
@@ -586,7 +610,7 @@ export default function TripDetailPage() {
 			{/* --- Map Preview Section --- */}
 			<div
 				className="mb-6 h-80 md:h-100 relative cursor-pointer group bg-gray-100 shadow-md border border-gray-200" // Adjusted height, added border/shadow
-				onClick={() => trip?.simplifiedRoute && setIsMapModalOpen(true)} // Open modal only if route exists
+				onClick={() => trip?.simplifiedRoute && setIsMapModalOpen(true)}
 				title={
 					trip?.simplifiedRoute
 						? "View interactive map"
@@ -613,30 +637,38 @@ export default function TripDetailPage() {
 			</div>
 
 			{/* --- Photos Section --- */}
-			<div className="bg-white p-6  shadow-md border border-gray-200 mb-6">
+			<div className="bg-white   shadow-md border border-gray-200 mb-6">
 				{/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
 					Photos ({trip.photos?.length || 0})
 				</h2> */}
 				{trip.photos && trip.photos.length > 0 ? (
-					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-						{trip.photos.map((photoId) => (
-							<div
-								key={photoId}
-								className="aspect-square overflow-hidden shadow"
-							>
-								<Image
-									// Construct URL to the photo serving endpoint
-									src={`${API_URL}/photos/${photoId}`}
-									alt={`Trip photo ${photoId}`}
-									width={300} // Provide initial width hint
-									height={300} // Provide initial height hint
-									className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
-									// Add unoptimized if serving directly without Next.js optimization layer
-									// unoptimized
-								/>
-								{/* TODO: Add delete button for owner later */}
-							</div>
-						))}
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
+						{trip.photos.map((photoId) => {
+							const imageUrl = `${API_URL}/photos/${photoId}`;
+							return (
+								<div
+									key={photoId}
+									className="aspect-square overflow-hidden shadow cursor-pointer group"
+									onClick={() => {
+										setSelectedImageUrl(imageUrl);
+										setIsImageModalOpen(true);
+									}}
+								>
+									<Image
+										// Construct URL to the photo serving endpoint
+										// src={`${API_URL}/photos/${photoId}`}
+										src={imageUrl}
+										alt={`Trip photo ${photoId}`}
+										width={300} // Provide initial width hint
+										height={300} // Provide initial height hint
+										className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
+										// Add unoptimized if serving directly without Next.js optimization layer
+										// unoptimized
+									/>
+									{/* TODO: Add delete button for owner later */}
+								</div>
+							);
+						})}
 					</div>
 				) : (
 					<p className="text-gray-600">No photos uploaded for this trip yet.</p>

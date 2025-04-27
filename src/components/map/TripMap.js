@@ -11,28 +11,37 @@ const FitBounds = ({ geoJsonData }) => {
 	const map = useMap();
 
 	useEffect(() => {
-		if (
-			geoJsonData &&
-			geoJsonData.features &&
-			geoJsonData.features.length > 0 &&
-			geoJsonData.features[0].geometry?.coordinates?.length >= 2
-		) {
-			try {
-				const geoJsonLayer = L.geoJSON(geoJsonData); // Create temporary layer
-				map.fitBounds(geoJsonLayer.getBounds().pad(0.1)); // Fit map to bounds with padding
-			} catch (error) {
-				console.error("Error fitting map bounds:", error);
+		// Invalidate size shortly after map is available, crucial for modals/tabs
+		// Use setTimeout to ensure it runs after the current render cycle and modal transition
+		const timer = setTimeout(() => {
+			map.invalidateSize(); // Tell Leaflet to re-check container size
+
+			// Now attempt to fit bounds after ensuring size is correct
+			if (
+				geoJsonData &&
+				geoJsonData.features &&
+				geoJsonData.features.length > 0 &&
+				geoJsonData.features[0].geometry?.coordinates?.length >= 2
+			) {
+				try {
+					const geoJsonLayer = L.geoJSON(geoJsonData); // Create temporary layer
+					map.fitBounds(geoJsonLayer.getBounds().pad(0.1)); // Fit map to bounds with padding
+				} catch (error) {
+					console.error("Error fitting map bounds:", error);
+				}
+			} else if (geoJsonData && geoJsonData.geometry) {
+				// Handle case where geoJsonData is just the LineString geometry
+				try {
+					const simpleLayer = L.geoJSON(geoJsonData); // Create layer from geometry
+					map.fitBounds(simpleLayer.getBounds().pad(0.1));
+				} catch (error) {
+					console.error("Error fitting map bounds from geometry:", error);
+				}
 			}
-		} else if (geoJsonData && geoJsonData.geometry) {
-			// Handle case where geoJsonData is just the LineString geometry
-			try {
-				const simpleLayer = L.geoJSON(geoJsonData); // Create layer from geometry
-				map.fitBounds(simpleLayer.getBounds().pad(0.1));
-			} catch (error) {
-				console.error("Error fitting map bounds from geometry:", error);
-			}
-		}
-		// If no valid data, map might default to initial center/zoom
+			// If no valid data, map might default to initial center/zoom
+		}, 10); // Small delay (e.g., 10ms) is often enough
+
+		return () => clearTimeout(timer); // Cleanup timeout if component unmounts or effect re-runs
 	}, [geoJsonData, map]); // Re-run when data or map instance changes
 
 	return null; // This component doesn't render anything itself
