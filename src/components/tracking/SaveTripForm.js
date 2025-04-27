@@ -5,8 +5,9 @@ import React, { useState, useEffect } from "react";
 export default function SaveTripForm({
 	initialTitle = "",
 	pointsCount,
+	poisCount,
 	onSave,
-	onCancel,
+	// onCancel,
 	isSaving,
 	saveError,
 	initialStartLocationName = "",
@@ -113,7 +114,7 @@ export default function SaveTripForm({
 							placeholder={
 								initialStartLocationName === "Fetching..."
 									? "Fetching..."
-									: "City, State/Region"
+									: "City"
 							}
 							className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-600"
 							disabled={initialStartLocationName === "Fetching..."}
@@ -135,7 +136,7 @@ export default function SaveTripForm({
 							placeholder={
 								initialEndLocationName === "Fetching..."
 									? "Fetching..."
-									: "City, State/Region"
+									: "City"
 							}
 							className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-600"
 							disabled={initialEndLocationName === "Fetching..."}
@@ -145,6 +146,7 @@ export default function SaveTripForm({
 				{/* Summary Info */}
 				<div className="text-sm text-gray-600 pt-2">
 					<p>Points Recorded: {pointsCount}</p>
+					<p>Points of Interest Marked: {poisCount}</p>
 				</div>
 				{/* Save Error Display */}
 				{saveError && (

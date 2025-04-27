@@ -12,11 +12,12 @@ import { reverseGeocode } from "@/utils/geocoding";
 import UserNotice from "@/components/tracking/UserNotice";
 import SaveTripForm from "@/components/tracking/SaveTripForm";
 import { API_URL } from "@/utils/config";
+import { FaMapMarkerAlt, FaSpinner } from "react-icons/fa";
 
 export default function NewTripPage() {
 	const { token } = useAuth();
 	const router = useRouter();
-	const tracker = useGpsTracker(); // Use the tracker hook
+	const tracker = useGpsTracker();
 
 	// State for the save operation itself
 	const [isSaving, setIsSaving] = useState(false);
@@ -25,30 +26,44 @@ export default function NewTripPage() {
 	const [initialStartLocation, setInitialStartLocation] = useState("");
 	const [initialEndLocation, setInitialEndLocation] = useState("");
 	const [isFetchingLocations, setIsFetchingLocations] = useState(false);
+	const [poiDescription, setPoiDescription] = useState("");
 
 	// Generate GPX when tracking stops and data needs saving
 	useEffect(() => {
 		if (
 			tracker.needsSaving &&
 			tracker.trackedPoints.length > 1 &&
-			!tracker.isTracking
+			!tracker.isTracking &&
+			!tracker.isPaused // Ensure not paused
 		) {
-			console.log("Generating GPX data...");
-			const generatedGpx = generateGpxString(tracker.trackedPoints);
+			console.log("Generating GPX data for saving...");
+			// Pass POIs to GPX generator if it supports waypoints
+			const generatedGpx = generateGpxString(
+				tracker.trackedPoints,
+				tracker.pointsOfInterest
+			);
 			setGpxData(generatedGpx);
-			setInitialStartLocation("");
+			setInitialStartLocation(""); // Reset for fetching
 			setInitialEndLocation("");
 		} else {
 			// Clear GPX data if state doesn't warrant it
 			setGpxData(null);
 		}
-	}, [tracker.needsSaving, tracker.trackedPoints, tracker.isTracking]); // Dependencies trigger GPX generation
+	}, [
+		tracker.needsSaving,
+		tracker.trackedPoints,
+		tracker.pointsOfInterest,
+		tracker.isTracking,
+		tracker.isPaused,
+	]);
 
+	// Fetch Start/End Location Names when GPX is ready
 	useEffect(() => {
 		const fetchLocations = async () => {
-			if (gpxData && tracker.trackedPoints.length > 1) {
+			// Fetch only when GPX is generated and we have points
+			if (gpxData && tracker.trackedPoints.length > 1 && !isFetchingLocations) {
 				setIsFetchingLocations(true);
-				setInitialStartLocation("Fetching..."); // Indicate loading
+				setInitialStartLocation("Fetching...");
 				setInitialEndLocation("Fetching...");
 
 				const startPoint = tracker.trackedPoints[0];
@@ -66,7 +81,6 @@ export default function NewTripPage() {
 					console.error("Error fetching locations:", error);
 					setInitialStartLocation("Error fetching");
 					setInitialEndLocation("Error fetching");
-					// Optionally set a specific error message for the user
 				} finally {
 					setIsFetchingLocations(false);
 				}
@@ -82,12 +96,18 @@ export default function NewTripPage() {
 		setIsSaving(true);
 
 		if (!gpxData) {
-			/* ... validation ... */ return;
+			setSaveError("Cannot save: GPX data is missing.");
+			setIsSaving(false);
+			return;
+		}
+		if (!token) {
+			setSaveError("Cannot save: Authentication token is missing.");
+			setIsSaving(false);
+			return;
 		}
 
 		try {
 			const res = await fetch(`${API_URL}/trips`, {
-				// Relative URL should work if backend proxying is set up, otherwise use full URL
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -95,26 +115,24 @@ export default function NewTripPage() {
 				},
 				body: JSON.stringify({
 					...formData, // title, description, start/end names
-					gpxString: gpxData,
+					gpxString: gpxData, // GPX data includes track and POIs (if gpxUtils supports it)
 				}),
 			});
 			const savedTripData = await res.json();
 			if (!res.ok) {
-				throw new Error(savedTripData.message || "Failed to save trip");
+				throw new Error(
+					savedTripData.message || `Failed to save trip (${res.status})`
+				);
 			}
 
 			console.log("Trip saved successfully:", savedTripData);
-			// alert("Trip saved successfully!");
-			tracker.clearSavedTrack(); // Clear localStorage via hook method
-			// Reset component state related to save form visibility/data maybe?
-			tracker.setNeedsSaving(false);
-			tracker.setTrackedPoints([]);
-			tracker.setElapsedTime(0);
+			tracker.clearSavedTrack(); // Clear localStorage and reset tracker state
+			// No need to reset component state manually, clearSavedTrack handles it
 
-			router.push(`/feed`);
+			router.push(`/feed`); // Redirect after successful save
 		} catch (err) {
 			console.error("Error saving trip:", err);
-			setSaveError(err.message || "An unexpected error occurred.");
+			setSaveError(err.message || "An unexpected error occurred during save.");
 		} finally {
 			setIsSaving(false);
 		}
@@ -122,15 +140,24 @@ export default function NewTripPage() {
 
 	// --- Cancel Save Handler ---
 	const handleCancelSave = () => {
-		tracker.clearSavedTrack(); // Clear localStorage
-		tracker.setTrackedPoints([]); // Reset points
-		tracker.setElapsedTime(0); // Reset timer
-		tracker.setNeedsSaving(false); // Reset flag
-		setInitialStartLocation(""); // Reset location state on cancel
-		setInitialEndLocation("");
-		setIsFetchingLocations(false);
-		setGpxData(null); // Clear generated GPX
-		setSaveError(""); // Clear save error
+		// Confirm before discarding
+		if (
+			window.confirm("Are you sure you want to discard this tracked route?")
+		) {
+			tracker.clearSavedTrack(); // Clear localStorage and reset tracker state
+			// Reset local component state related to the form
+			setGpxData(null);
+			setSaveError("");
+			setInitialStartLocation("");
+			setInitialEndLocation("");
+			setIsFetchingLocations(false);
+		}
+	};
+
+	// --- Add POI Handler ---
+	const handleAddPoi = () => {
+		tracker.addPointOfInterest(poiDescription);
+		setPoiDescription("");
 	};
 
 	// Determine initial title for the form
@@ -139,19 +166,21 @@ export default function NewTripPage() {
 			? `Trip on ${new Date(
 					tracker.trackedPoints[0].timestamp
 			  ).toLocaleDateString()}`
+			: tracker.startTime
+			? `Trip started on ${new Date(tracker.startTime).toLocaleDateString()}`
 			: "";
 
 	// --- Render Logic ---
 	if (tracker.isInitializing) {
 		return (
 			<div className="flex justify-center items-center h-screen">
-				<p>Loading tracker...</p>
+				<p>Loading ...</p>
 			</div>
 		);
 	}
-
 	// Determine whether to show the Save Form or the Tracking UI
-	const showSaveForm = tracker.needsSaving && gpxData && !tracker.isTracking;
+	const showSaveForm =
+		tracker.needsSaving && gpxData && !tracker.isTracking && !tracker.isPaused;
 	console.log("elapsedTime", tracker.elapsedTime);
 	console.log("trackedPoints", tracker.trackedPoints);
 
@@ -167,6 +196,7 @@ export default function NewTripPage() {
 						<UserNotice />
 						<TrackingStatusDisplay
 							isTracking={tracker.isTracking}
+							isPaused={tracker.isPaused} // Pass pause state
 							elapsedTime={tracker.elapsedTime}
 							pointsCount={tracker.trackedPoints.length}
 						/>
@@ -185,42 +215,126 @@ export default function NewTripPage() {
 							</p>
 						)}
 						{/* Action Buttons */}
+						{/* --- Action Buttons --- */}
 						<div className="mt-6 flex flex-wrap justify-center items-center gap-4">
-							{!tracker.isTracking ? (
+							{/* Start / Resume */}
+							{!tracker.isTracking &&
+								!tracker.isPaused &&
+								tracker.trackedPoints.length === 0 && (
+									<button
+										onClick={tracker.startTracking}
+										className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 font-semibold text-lg"
+									>
+										Start Tracking
+									</button>
+								)}
+							{tracker.isPaused && (
 								<button
-									onClick={tracker.startTracking}
-									className="bg-green-600 hover:bg-green-700 text-white px-6 py-3  font-semibold text-lg"
+									onClick={tracker.resumeTracking}
+									className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 font-semibold text-lg"
 								>
-									Start Tracking
-								</button>
-							) : (
-								<button
-									onClick={tracker.stopTracking}
-									className="bg-red-600 hover:bg-red-700 text-white px-6 py-3  font-semibold text-lg"
-								>
-									Stop Tracking
-								</button>
-							)}
-							{/* Show Stop button also if needsSaving is true (restored data) */}
-							{tracker.needsSaving && !tracker.isTracking && (
-								<button
-									onClick={tracker.stopTracking}
-									className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2  text-sm"
-								>
-									Process Restored Data
+									Resume Tracking
 								</button>
 							)}
+
+							{/* Pause */}
+							{tracker.isTracking && !tracker.isPaused && (
+								<button
+									onClick={tracker.pauseTracking}
+									className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 font-semibold text-lg"
+								>
+									Pause Tracking
+								</button>
+							)}
+
+							{/* Stop (Final) */}
+							{(tracker.isTracking || tracker.isPaused) && ( // Show Stop if tracking OR paused
+								<button
+									onClick={tracker.stopTracking}
+									className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 font-semibold text-lg"
+								>
+									Stop & Finish Trip
+								</button>
+							)}
+							{/* Discard (if paused or stopped with data) */}
+							{(tracker.isPaused ||
+								(tracker.needsSaving && !tracker.isTracking)) &&
+								tracker.trackedPoints.length > 0 && (
+									<button
+										onClick={handleCancelSave} // Use the discard handler
+										className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 text-sm"
+									>
+										Discard Tracked Data
+									</button>
+								)}
+
 							{/* Dummy Data Button */}
 							{process.env.NODE_ENV === "development" &&
-								!tracker.isTracking && (
+								!tracker.isTracking &&
+								!tracker.isPaused &&
+								tracker.trackedPoints.length === 0 && (
 									<button
 										onClick={tracker.addDummyPoints}
-										className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2  text-sm"
+										className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 text-sm"
 									>
-										Add Dummy Points (Dev)
+										Add Dummy Data (Dev)
 									</button>
 								)}
 						</div>
+						{/* --- Add POI Section (only when tracking or paused with position) --- */}
+						{(tracker.isTracking || tracker.isPaused) &&
+							tracker.currentPosition && (
+								<div className="mt-8 pt-6 border-t border-gray-200">
+									<h3 className="text-lg font-semibold text-gray-800 mb-3">
+										Add Point of Interest
+									</h3>
+									<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+										<input
+											type="text"
+											value={poiDescription}
+											onChange={(e) => setPoiDescription(e.target.value)}
+											placeholder="Optional description (e.g., 'Nice viewpoint')"
+											maxLength={100}
+											className="flex-grow block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+										/>
+										<button
+											onClick={handleAddPoi}
+											disabled={tracker.isAddingPoi}
+											className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50 flex items-center justify-center w-full sm:w-auto flex-shrink-0"
+										>
+											{tracker.isAddingPoi ? (
+												<FaSpinner className="animate-spin mr-2" />
+											) : (
+												<FaMapMarkerAlt className="mr-2" />
+											)}
+											{tracker.isAddingPoi ? "Adding..." : "Mark Location"}
+										</button>
+									</div>
+								</div>
+							)}
+						{/* --- Display POIs --- */}
+						{tracker.pointsOfInterest.length > 0 && (
+							<div className="mt-6">
+								<h4 className="text-md font-semibold text-gray-700 mb-2">
+									Points of Interest Marked:
+								</h4>
+								<ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
+									{tracker.pointsOfInterest.map((poi, index) => (
+										<li key={poi.timestamp || index}>
+											<span className="font-medium">
+												{poi.name || `POI ${index + 1}`}
+											</span>
+											{poi.description && (
+												<span className="italic"> - {poi.description}</span>
+											)}
+											<span className="text-xs text-gray-500 ml-2">
+												({poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
+											</span>
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
 					</>
 				) : (
 					// --- Save Form View ---
@@ -233,8 +347,9 @@ export default function NewTripPage() {
 						<SaveTripForm
 							initialTitle={initialFormTitle}
 							pointsCount={tracker.trackedPoints.length}
-							onSave={handleSaveTrip} // Pass the save handler
-							onCancel={handleCancelSave} // Pass the cancel handler (form doesn't need it directly, parent handles actions)
+							poisCount={tracker.pointsOfInterest.length} // Pass POI count
+							onSave={handleSaveTrip}
+							// onCancel is handled by buttons below
 							isSaving={isSaving}
 							saveError={saveError}
 							initialStartLocationName={initialStartLocation}
@@ -242,11 +357,9 @@ export default function NewTripPage() {
 						/>
 						{/* Form Actions (Buttons outside the form component) */}
 						<div className="flex justify-end space-x-3 pt-4 mt-4 border-t border-gray-200">
-							{" "}
-							{/* Added top border */}
 							<button
 								type="button"
-								onClick={handleCancelSave} // Use the cancel handler
+								onClick={handleCancelSave} // Use the cancel/discard handler
 								className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm"
 								disabled={isSaving}
 							>
@@ -254,9 +367,9 @@ export default function NewTripPage() {
 							</button>
 							<button
 								type="submit"
-								form="saveTripForm" // Associate button with the form inside SaveTripForm component
+								form="saveTripForm" // Associate button with the form
 								className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
-								disabled={isSaving}
+								disabled={isSaving || isFetchingLocations} // Disable if saving or fetching locations
 							>
 								{isSaving ? "Saving..." : "Save Trip"}
 							</button>
