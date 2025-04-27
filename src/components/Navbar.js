@@ -16,9 +16,17 @@ import {
 	FaSearch,
 	FaUserCircle,
 	FaCog,
+	FaStar,
 } from "react-icons/fa"; // Example: Font Awesome icons
 import { MdAddLocationAlt } from "react-icons/md"; // Example: Material Design
 import ProfilePicture from "./ProfilePicture";
+import {
+	Menu,
+	MenuButton,
+	MenuItems,
+	MenuItem,
+	Transition,
+} from "@headlessui/react";
 
 export default function Navbar() {
 	const { user, logout, loading, isAuthenticated } = useAuth();
@@ -72,7 +80,7 @@ export default function Navbar() {
 					href={isAuthenticated ? "/feed" : "/"}
 					className="text-xl font-bold text-primary hover:text-primary-dark transition-colors"
 				>
-					Motorhome Mapper
+					Mapper
 				</Link>
 
 				{/* Desktop Navigation / Actions (Hidden on Mobile) */}
@@ -84,7 +92,7 @@ export default function Navbar() {
 							{/* Settings Button (Placeholder) */}
 							<NavLink
 								href="/trips/new"
-								icon={FaPlusCircle}
+								icon={FaRoute}
 							>
 								{/* Record */}
 							</NavLink>
@@ -98,6 +106,7 @@ export default function Navbar() {
 								href="/search"
 								icon={FaSearch}
 							></NavLink>
+
 							{user && (
 								<Link
 									href={`/profile/${user._id}`}
@@ -118,6 +127,13 @@ export default function Navbar() {
 									{/* <span className="ml-2 text-sm font-medium">{user.username}</span> */}
 								</Link>
 							)}
+
+							<NavLink
+								href="/recommendations/new"
+								icon={FaStar}
+								title="Recommendation"
+								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
+							></NavLink>
 
 							<NavLink
 								href="/settings"
@@ -164,6 +180,13 @@ export default function Navbar() {
 								icon={FaSearch}
 								className="p-1"
 							></NavLink>
+							<NavLink
+								href="/recommendations/new"
+								icon={FaStar}
+								title="Recommendation"
+								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
+							></NavLink>
+
 							<NavLink
 								href="/settings"
 								icon={FaCog}

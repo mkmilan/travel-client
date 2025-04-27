@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	FaHome,
+	FaRoute,
 	FaMapMarkedAlt,
 	FaPlusCircle,
 	FaListAlt,
@@ -14,7 +15,7 @@ import {
 const navItems = [
 	{ href: "/feed", label: "Home", icon: FaHome },
 	// { href: '/map-explore', label: 'Maps', icon: FaMapMarkedAlt }, // Placeholder for later Map Explore feature
-	{ href: "/trips/new", label: "Record", icon: FaPlusCircle }, // Use a distinct record icon
+	{ href: "/trips/new", label: "Record", icon: FaRoute }, // Use a distinct record icon
 	{ href: "/my-trips", label: "Trips", icon: FaListAlt }, // Or use Groups icon if implementing that
 	{ href: "/profile/me", label: "You", icon: FaUser }, // Link to own profile
 ];
