@@ -15,9 +15,14 @@ import {
 	FaEllipsisV,
 	FaEdit,
 	FaTrash,
+	FaMapMarkerAlt,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
-import { formatDuration, formatDistance } from "@/utils/formatters";
+import {
+	formatDuration,
+	formatDistance,
+	formatSpeed,
+} from "@/utils/formatters";
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
 import LikersModal from "@/components/trips/LikersModal";
@@ -364,6 +369,7 @@ export default function TripDetailPage() {
 	}
 	// console.log("profilePictureUrl", profilePictureUrl);
 	console.log("TripCard trip:", trip);
+	const poiCount = trip.pointsOfInterest?.length || 0;
 
 	return (
 		// Remove p-4 to allow cards to touch edges on mobile
@@ -416,7 +422,13 @@ export default function TripDetailPage() {
 							</Link>
 							<span>{trip.user.username}</span>
 							<span className="mx-2">·</span>
-							<span>{new Date(trip.startDate).toLocaleDateString()}</span>
+							<span>
+								{new Date(trip.startDate).toLocaleDateString()} at{" "}
+								{new Date(trip.startDate).toLocaleTimeString([], {
+									hour: "2-digit",
+									minute: "2-digit",
+								})}
+							</span>
 						</div>
 					</div>
 					{/* Edit/Delete Buttons for Owner */}
@@ -513,28 +525,53 @@ export default function TripDetailPage() {
 				{/* Basic Info */}
 				<div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-4 border-t border-b border-gray-200 py-4">
 					<div>
-						<p className="text-xs text-gray-500 uppercase">From</p>
+						<p className="text-xs text-gray-500 ">From</p>
 						<p className="font-medium text-gray-800">
 							{trip.startLocationName || "N/A"}
 						</p>
 					</div>
 					<div>
-						<p className="text-xs text-gray-500 uppercase">To</p>
+						<p className="text-xs text-gray-500 ">To</p>
 						<p className="font-medium text-gray-800">
 							{trip.endLocationName || "N/A"}
 						</p>
 					</div>
 					<div>
-						<p className="text-xs text-gray-500 uppercase">Duration</p>
+						<p className="text-xs text-gray-500 ">Duration</p>
 						<p className="font-medium text-gray-800">
 							{formatDuration(trip.durationMillis)}
 						</p>
 					</div>
 					<div>
-						<p className="text-xs text-gray-500 uppercase">Distance</p>
+						<p className="text-xs text-gray-500 ">Distance</p>
 						<p className="font-medium text-gray-800">
 							{formatDistance(trip.distanceMeters)}
 						</p>
+					</div>
+					{/* --- Add Average Speed --- */}
+					<div>
+						<p className="text-xs text-gray-500 ">Avg Speed</p>
+						<p className="font-medium text-gray-800">
+							{formatSpeed(trip.distanceMeters, trip.durationMillis)}
+						</p>
+					</div>
+					{/* --- Add POI Count --- */}
+					<div>
+						<a // Use an anchor tag to jump to comments section
+							href="#pois"
+							onClick={(e) => {
+								// Smooth scroll if possible
+								e.preventDefault();
+								document
+									.getElementById("pois")
+									?.scrollIntoView({ behavior: "smooth" });
+							}}
+						>
+							<div>
+								<p className="text-xs text-gray-500 ">POIs</p>
+								<p className="font-medium text-gray-800">{poiCount}</p>
+							</div>
+						</a>
 					</div>
 				</div>
 
@@ -607,6 +644,44 @@ export default function TripDetailPage() {
 					// {isOwner && <Link href={`/trips/${tripId}/edit`} className="...">Add Photos</Link>}
 				)}
 			</div>
+
+			{/* --- Points of Interest Section --- */}
+			{poiCount > 0 && (
+				<div
+					id="pois"
+					className="bg-white p-6 shadow-md border border-gray-200 mb-6 scroll-mt-20" // Added scroll margin
+				>
+					<h2 className="text-xl font-semibold text-gray-800 mb-4">
+						Points of Interest ({poiCount})
+					</h2>
+					<ul className="space-y-4">
+						{trip.pointsOfInterest.map((poi, index) => (
+							<li
+								key={poi.timestamp || index}
+								className="border-b pb-3 last:border-b-0 last:pb-0"
+							>
+								<div className="flex items-start space-x-3">
+									<FaMapMarkerAlt className="text-blue-500 mt-1 h-4 w-4 flex-shrink-0" />
+									<div>
+										<p className="font-semibold text-gray-800">
+											{poi.name || `POI ${index + 1}`}
+										</p>
+										{poi.description && (
+											<p className="text-sm text-gray-600 mt-1">
+												{poi.description}
+											</p>
+										)}
+										<p className="text-xs text-gray-500 mt-1">
+											Marked at: {new Date(poi.timestamp).toLocaleString()} (
+											{poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
+										</p>
+									</div>
+								</div>
+							</li>
+						))}
+					</ul>
+				</div>
+			)}
 
 			{/* --- Like and Comment Counts --- */}
 			<div className="flex items-center space-x-6 text-sm text-gray-600 border-t pt-4 px-4 sm:px-6">

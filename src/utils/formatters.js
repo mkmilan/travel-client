@@ -43,3 +43,24 @@ export const formatDistance = (meters) => {
 	const kilometers = meters / 1000;
 	return `${kilometers.toFixed(1)} km`;
 };
+
+/**
+ * Calculates and formats average speed in km/h.
+ * @param {number} distanceMeters - Distance in meters.
+ * @param {number} durationMillis - Duration in milliseconds.
+ * @returns {string} Formatted speed string (e.g., '45.2 km/h') or 'N/A'.
+ */
+export const formatSpeed = (distanceMeters, durationMillis) => {
+	if (
+		typeof distanceMeters !== "number" ||
+		distanceMeters < 0 ||
+		typeof durationMillis !== "number" ||
+		durationMillis <= 0 // Avoid division by zero or negative duration
+	) {
+		return "N/A";
+	}
+	const durationSeconds = durationMillis / 1000;
+	const speedMetersPerSecond = distanceMeters / durationSeconds;
+	const speedKmPerHour = speedMetersPerSecond * 3.6; // Conversion factor
+	return `${speedKmPerHour.toFixed(1)} km/h`;
+};
