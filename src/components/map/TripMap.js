@@ -2,12 +2,27 @@
 "use client"; // This component uses Leaflet which interacts with the DOM
 
 import React, { useEffect } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import {
+	MapContainer,
+	TileLayer,
+	GeoJSON,
+	Marker,
+	Popup,
+	useMap,
+} from "react-leaflet";
 import L from "leaflet"; // Import Leaflet library itself
+
+// --- Custom POI Icon (Optional) ---
+const poiIcon = new L.Icon({
+	iconUrl: "/icons/poi-marker.svg", // Create an SVG icon in public/icons
+	iconSize: [25, 35], // Size of the icon
+	iconAnchor: [12, 35], // Point of the icon which will correspond to marker's location
+	popupAnchor: [1, -34], // Point from which the popup should open relative to the iconAnchor
+});
 
 // --- Helper Component to Fit Bounds ---
 // react-leaflet v3+ hooks like useMap must be used inside children of MapContainer
-const FitBounds = ({ geoJsonData }) => {
+const FitBounds = ({ geoJsonData, pointsOfInterest }) => {
 	const map = useMap();
 
 	useEffect(() => {
@@ -38,11 +53,25 @@ const FitBounds = ({ geoJsonData }) => {
 					console.error("Error fitting map bounds from geometry:", error);
 				}
 			}
+			// Extend bounds to include POIs
+			if (pointsOfInterest && pointsOfInterest.length > 0) {
+				const poiLatLngs = pointsOfInterest.map((poi) => [poi.lat, poi.lon]);
+				const poiBounds = L.latLngBounds(poiLatLngs);
+				if (bounds) {
+					bounds.extend(poiBounds); // Combine route bounds and POI bounds
+				} else {
+					bounds = poiBounds; // If no route, just use POI bounds
+				}
+			}
+			// // Fit map to combined bounds if they exist
+			// if (bounds && bounds.isValid()) {
+			// 	map.fitBounds(bounds.pad(0.1));
+			// }
 			// If no valid data, map might default to initial center/zoom
 		}, 10); // Small delay (e.g., 10ms) is often enough
 
 		return () => clearTimeout(timer); // Cleanup timeout if component unmounts or effect re-runs
-	}, [geoJsonData, map]); // Re-run when data or map instance changes
+	}, [geoJsonData, pointsOfInterest, map]); // Re-run when data or map instance changes
 
 	return null; // This component doesn't render anything itself
 };
@@ -50,6 +79,7 @@ const FitBounds = ({ geoJsonData }) => {
 // --- Main Map Component ---
 export default function TripMap({
 	simplifiedRouteGeoJson,
+	pointsOfInterest = [],
 	interactive = true,
 	className,
 }) {
@@ -128,6 +158,29 @@ export default function TripMap({
 					style={routeStyle}
 				/>
 			)}
+
+			{pointsOfInterest.map((poi) => (
+				<Marker
+					key={poi._id || poi.timestamp} // Use _id if available (after schema change), fallback to timestamp
+					position={[poi.lat, poi.lon]}
+					icon={poiIcon} // Use custom icon
+				>
+					<Popup>
+						<div className="text-sm">
+							<p className="font-semibold mb-1">
+								{poi.name ||
+									`POI @ ${new Date(poi.timestamp).toLocaleTimeString()}`}
+							</p>
+							{poi.description && (
+								<p className="text-gray-600 mb-1">{poi.description}</p>
+							)}
+							<p className="text-xs text-gray-500">
+								{poi.lat.toFixed(5)}, {poi.lon.toFixed(5)}
+							</p>
+						</div>
+					</Popup>
+				</Marker>
+			))}
 
 			{/* Component to automatically adjust map bounds */}
 			{geoJsonFeatureCollection && (

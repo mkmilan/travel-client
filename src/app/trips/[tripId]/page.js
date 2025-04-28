@@ -433,6 +433,7 @@ export default function TripDetailPage() {
 				{trip?.simplifiedRoute ? (
 					<TripMap
 						simplifiedRouteGeoJson={trip.simplifiedRoute}
+						pointsOfInterest={trip?.pointsOfInterest}
 						interactive={true} // Explicitly interactive
 						className=" overflow-hidden" // Add rounding if panel has padding
 					/>
@@ -681,6 +682,7 @@ export default function TripDetailPage() {
 				{trip?.simplifiedRoute ? (
 					<TripMap
 						simplifiedRouteGeoJson={trip.simplifiedRoute}
+						pointsOfInterest={trip?.pointsOfInterest}
 						interactive={false} // Render non-interactively
 					/>
 				) : (
@@ -762,6 +764,22 @@ export default function TripDetailPage() {
 											{poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
 										</p>
 									</div>
+									{loggedInUser && ( // Only show if logged in
+										<Link
+											href={`/recommendations/new?tripId=${tripId}&poiId=${
+												poi._id
+											}&lat=${poi.lat}&lon=${
+												poi.lon
+											}&poiName=${encodeURIComponent(
+												poi.name || ""
+											)}&poiDesc=${encodeURIComponent(poi.description || "")}`}
+											title="Create recommendation from this POI"
+											className="flex-shrink-0 p-1 text-indigo-600 hover:text-indigo-800 transition-colors"
+										>
+											<FaPlusCircle className="w-5 h-5" />
+											<span className="sr-only">Create Recommendation</span>
+										</Link>
+									)}
 								</div>
 							</li>
 						))}

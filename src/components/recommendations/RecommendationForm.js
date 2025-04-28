@@ -39,6 +39,8 @@ export default function RecommendationForm({
 	initialData = {}, // For potential editing later
 	isEditing = false,
 	associatedTripId = null,
+	associatedPoiId = null,
+	source = "MANUAL",
 }) {
 	const router = useRouter();
 	const { token } = useAuth();
@@ -48,9 +50,12 @@ export default function RecommendationForm({
 		rating: initialData.rating || 0,
 		primaryCategory: initialData.primaryCategory || "",
 		attributeTags: initialData.attributeTags || [],
-		latitude: initialData.location?.coordinates?.[1] || "", // Lat is index 1
-		longitude: initialData.location?.coordinates?.[0] || "", // Lon is index 0
+		// latitude: initialData.location?.coordinates?.[1] || "", // Lat is index 1
+		// longitude: initialData.location?.coordinates?.[0] || "", // Lon is index 0
+		latitude: initialData.latitude || "",
+		longitude: initialData.longitude || "",
 	});
+
 	const [photos, setPhotos] = useState([]); // Array of File objects
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
@@ -128,6 +133,11 @@ export default function RecommendationForm({
 		if (associatedTripId) {
 			submissionData.append("associatedTrip", associatedTripId);
 		}
+
+		if (associatedPoiId) {
+			submissionData.append("associatedPoiId", associatedPoiId);
+		}
+		submissionData.append("source", source);
 		// Append photos
 		photos.forEach((photo) => {
 			submissionData.append("photos", photo); // Match the field name used in multerConfig
