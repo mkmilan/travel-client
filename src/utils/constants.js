@@ -43,4 +43,14 @@ export const RECOMMENDATION_TAGS = [
 	{ value: "POOL", label: "Swimming Pool" },
 ];
 
-// You can add other constants here if needed
+// Helper function to get the label for a recommendation category value
+export const getRecommendationCategoryLabel = (value) => {
+	return (
+		RECOMMENDATION_CATEGORIES.find((cat) => cat.value === value)?.label || value
+	);
+};
+
+// Helper function to get the label for a recommendation tag value
+export const getRecommendationTagLabel = (value) => {
+	return RECOMMENDATION_TAGS.find((tag) => tag.value === value)?.label || value;
+};

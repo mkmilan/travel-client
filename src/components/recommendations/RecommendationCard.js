@@ -5,13 +5,7 @@ import Link from "next/link";
 import ProfilePicture from "@/components/ProfilePicture";
 import { FaStar } from "react-icons/fa";
 import { RECOMMENDATION_CATEGORIES } from "@/utils/constants"; // To display category label
-
-// Helper to get category label
-const getCategoryLabel = (value) => {
-	return (
-		RECOMMENDATION_CATEGORIES.find((cat) => cat.value === value)?.label || value
-	);
-};
+import { getRecommendationCategoryLabel } from "@/utils/constants";
 
 // Simple Star Display Component
 const StaticStarRating = ({ rating }) => {
@@ -39,18 +33,19 @@ export default function RecommendationCard({ recommendation }) {
 	return (
 		<div className="border-b border-gray-200 py-4 last:border-b-0">
 			<div className="flex justify-between items-start mb-2">
-				<h3 className="text-md font-semibold text-gray-800 hover:text-indigo-600">
-					{/* Link to a future recommendation detail page? */}
-					{/* <Link href={`/recommendations/${_id}`}> */}
-					{name}
-					{/* </Link> */}
-				</h3>
+				{/* Link the name to the detail page */}
+				<Link
+					href={`/recommendations/${_id}`}
+					className="hover:text-indigo-600"
+				>
+					<h3 className="text-md font-semibold text-gray-800">{name}</h3>
+				</Link>
 				<StaticStarRating rating={rating} />
 			</div>
 
 			<div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
 				<span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">
-					{getCategoryLabel(primaryCategory)}
+					{getRecommendationCategoryLabel(primaryCategory)}
 				</span>
 				<span>·</span>
 				<Link
@@ -60,20 +55,24 @@ export default function RecommendationCard({ recommendation }) {
 					<ProfilePicture
 						size={20}
 						profilePictureUrl={user.profilePictureUrl}
-						className="mr-2"
+						className="mr-1"
 					/>
-					<span className="ml-2">{user.username}</span>
+					<span>{user.username}</span>
 				</Link>
 			</div>
 
-			<p className="text-sm text-gray-600 line-clamp-3">
-				{/* Show a snippet of the description */}
+			<p className="text-sm text-gray-600 line-clamp-2 mb-1">
+				{" "}
+				{/* Reduced line clamp */}
 				{description}
 			</p>
-			{/* Add link to view full recommendation later */}
-			{/* <Link href={`/recommendations/${_id}`} className="text-sm text-indigo-600 hover:underline mt-1 inline-block">
-                View Details
-            </Link> */}
+			{/* Add link to view full recommendation */}
+			<Link
+				href={`/recommendations/${_id}`}
+				className="text-sm text-indigo-600 hover:underline mt-1 inline-block"
+			>
+				View Details
+			</Link>
 		</div>
 	);
 }
