@@ -37,11 +37,11 @@ export default function CommentList({
 		<div className="space-y-4">
 			{comments.map((comment) => {
 				const canDelete = loggedInUser === comment.user._id;
-				console.log("CanDelete:", canDelete);
-				console.log("Comment User ID:", comment.user._id);
-				console.log("LoggedInUser ID:", loggedInUser);
-				console.log("deletingId:", deletingId);
-				console.log("Comment ID:", comment._id);
+				// console.log("CanDelete:", canDelete);
+				// console.log("Comment User ID:", comment.user._id);
+				// console.log("LoggedInUser ID:", loggedInUser);
+				// console.log("deletingId:", deletingId);
+				// console.log("Comment ID:", comment._id);
 				return (
 					<div
 						key={comment._id}

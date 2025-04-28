@@ -38,6 +38,7 @@ const StarRating = ({ rating, setRating }) => {
 export default function RecommendationForm({
 	initialData = {}, // For potential editing later
 	isEditing = false,
+	associatedTripId = null,
 }) {
 	const router = useRouter();
 	const { token } = useAuth();
@@ -123,7 +124,10 @@ export default function RecommendationForm({
 				submissionData.append(key, formData[key]);
 			}
 		});
-
+		// --- Add associatedTripId if present ---
+		if (associatedTripId) {
+			submissionData.append("associatedTrip", associatedTripId);
+		}
 		// Append photos
 		photos.forEach((photo) => {
 			submissionData.append("photos", photo); // Match the field name used in multerConfig
@@ -148,7 +152,12 @@ export default function RecommendationForm({
 			console.log("Recommendation created:", result);
 			// Redirect to the new recommendation's detail page (or a list page)
 			// For now, let's redirect to a general recommendations list page (we'll create this later)
-			router.push("/recommendations"); // Or router.push(`/recommendations/${result._id}`);
+			// router.push("/recommendations");
+			if (associatedTripId) {
+				router.push(`/trips/${associatedTripId}`);
+			} else {
+				router.push("/recommendations"); // Fallback if no tripId
+			}
 		} catch (err) {
 			console.error("Submission error:", err);
 			setError(err.message || "An error occurred during submission.");

@@ -128,12 +128,12 @@ export default function Navbar() {
 								</Link>
 							)}
 
-							<NavLink
+							{/* <NavLink
 								href="/recommendations/new"
 								icon={FaStar}
 								title="Recommendation"
 								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
-							></NavLink>
+							></NavLink> */}
 
 							<NavLink
 								href="/settings"
@@ -180,12 +180,12 @@ export default function Navbar() {
 								icon={FaSearch}
 								className="p-1"
 							></NavLink>
-							<NavLink
+							{/* <NavLink
 								href="/recommendations/new"
 								icon={FaStar}
 								title="Recommendation"
 								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
-							></NavLink>
+							></NavLink> */}
 
 							<NavLink
 								href="/settings"

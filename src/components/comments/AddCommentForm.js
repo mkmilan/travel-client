@@ -52,7 +52,7 @@ export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className="mt-4"
+			className="mt-2"
 		>
 			<textarea
 				rows={3}

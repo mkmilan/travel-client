@@ -16,6 +16,9 @@ import {
 	FaEdit,
 	FaTrash,
 	FaMapMarkerAlt,
+	FaPlus,
+	FaStar,
+	FaChevronUp,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import {
@@ -28,6 +31,7 @@ import ProfilePicture from "@/components/ProfilePicture";
 import LikersModal from "@/components/trips/LikersModal";
 import Modal from "@/components/Modal";
 import CommentList from "@/components/comments/CommentList";
+import RecommendationList from "@/components/recommendations/RecommendationList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
 import {
 	Menu,
@@ -35,6 +39,7 @@ import {
 	MenuItems,
 	MenuItem,
 	Transition,
+	Disclosure,
 } from "@headlessui/react";
 
 // --- Dynamically import the Map component ---
@@ -96,6 +101,11 @@ export default function TripDetailPage() {
 	// State for Map Modal
 	const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
+	// --- Recommendation State ---
+	const [recommendations, setRecommendations] = useState([]);
+	const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+	const [recommendationsError, setRecommendationsError] = useState("");
+
 	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 	const [selectedImageUrl, setSelectedImageUrl] = useState("");
 
@@ -153,6 +163,33 @@ export default function TripDetailPage() {
 		} finally {
 			setCommentsLoading(false);
 		}
+	}, [tripId]);
+
+	// --- Fetch Recommendations ---
+	useEffect(() => {
+		if (!tripId) return;
+
+		const fetchRecommendations = async () => {
+			setRecommendationsLoading(true);
+			setRecommendationsError("");
+			try {
+				const response = await fetch(
+					`${API_URL}/trips/${tripId}/recommendations`
+				);
+				if (!response.ok) {
+					throw new Error("Failed to fetch recommendations");
+				}
+				const data = await response.json();
+				setRecommendations(data);
+			} catch (err) {
+				console.error("Error fetching recommendations:", err);
+				setRecommendationsError(err.message);
+			} finally {
+				setRecommendationsLoading(false);
+			}
+		};
+
+		fetchRecommendations();
 	}, [tripId]);
 
 	useEffect(() => {
@@ -536,6 +573,23 @@ export default function TripDetailPage() {
 												)}
 											</MenuItem>
 										</div>
+										<div className="px-1 py-1">
+											<MenuItem>
+												{({ active }) => (
+													<Link
+														href={`/recommendations/new?tripId=${tripId}`}
+														title="Add a recommendation related to this trip"
+														className={`${
+															active ? "bg-gray-200 " : "text-gray-700" // Use red text for delete
+														} group flex items-center w-full px-2 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
+													>
+														<FaPlus className="w-4 h-4 mr-2" />
+														Recommendation
+														{/* For screen readers */}
+													</Link>
+												)}
+											</MenuItem>
+										</div>
 									</MenuItems>
 								</Transition>
 							</Menu>
@@ -715,6 +769,49 @@ export default function TripDetailPage() {
 				</div>
 			)}
 
+			{/* --- Recommendations Section (Disclosure) --- */}
+			<div className="bg-white shadow-md border border-gray-200 mb-6">
+				<Disclosure>
+					{({ open }) => (
+						<div>
+							<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
+								<span>
+									Recommendations (
+									{recommendationsLoading ? "..." : recommendations.length})
+								</span>
+								<FaChevronUp
+									className={`${
+										open ? "" : "rotate-180 transform"
+									} h-5 w-5 text-gray-500 transition-transform`}
+								/>
+							</Disclosure.Button>
+							<Transition
+								enter="transition duration-100 ease-out"
+								enterFrom="transform scale-95 opacity-0"
+								enterTo="transform scale-100 opacity-100"
+								leave="transition duration-75 ease-out"
+								leaveFrom="transform scale-100 opacity-100"
+								leaveTo="transform scale-95 opacity-0"
+							>
+								<Disclosure.Panel className="px-4 pb-4 pt-2 text-sm text-gray-500 border-t">
+									{recommendationsLoading ? (
+										<p>Loading recommendations...</p>
+									) : recommendationsError ? (
+										<p className="text-red-500">
+											Error: {recommendationsError}
+										</p>
+									) : recommendations.length > 0 ? (
+										<RecommendationList recommendations={recommendations} />
+									) : (
+										<p>No recommendations added for this trip yet.</p>
+									)}
+								</Disclosure.Panel>
+							</Transition>
+						</div>
+					)}
+				</Disclosure>
+			</div>
+
 			{/* --- Like and Comment Counts --- */}
 			<div className="flex items-center space-x-6 text-sm text-gray-600 border-t pt-4 px-4 sm:px-6">
 				<button
@@ -763,49 +860,71 @@ export default function TripDetailPage() {
 			{/* Comments Section (Placeholder) */}
 			<div
 				id="comments"
-				className="bg-white p-6 shadow-md border border-gray-200 scroll-mt-20"
+				className="bg-white  shadow-md border border-gray-200 scroll-mt-20"
 			>
-				{" "}
-				{/* Added id and scroll margin */}
-				<h2 className="text-xl font-semibold text-gray-800 mb-4">
+				<Disclosure>
+					{({ open }) => (
+						<div>
+							<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
+								<span>Comments ({comments?.length || 0})</span>
+								<FaChevronUp
+									className={`${
+										open ? "" : "rotate-180 transform"
+									} h-5 w-5 text-gray-500 transition-transform`}
+								/>
+							</Disclosure.Button>
+							{/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
 					Comments ({comments?.length || 0})
-				</h2>
-				{/* Add Comment Form (Show if logged in) */}
-				{loggedInUser && (
-					<AddCommentForm
-						tripId={tripId}
-						onCommentAdded={handleCommentAdded} // Pass callback
-						token={token} // Pass token
-					/>
-				)}
-				{!loggedInUser && (
-					<p className="text-sm text-gray-500 mb-4">
-						<Link
-							href={`/login`}
-							className="text-blue-600 hover:underline"
-						>
-							Log in
-						</Link>{" "}
-						to add a comment.
-					</p>
-				)}
-				{/* Divider */}
-				<hr className="my-6" />
-				{/* Comment List */}
-				{commentsLoading ? (
-					<p>Loading comments...</p>
-				) : commentsError ? (
-					<p className="text-red-500">
-						Error loading comments: {commentsError}
-					</p>
-				) : (
-					<CommentList
-						comments={comments}
-						loggedInUser={loggedInUser._id}
-						tripId={tripId}
-						onDeleteComment={handleDeleteComment}
-					/>
-				)}
+				</h2> */}
+							<Transition
+								enter="transition duration-100 ease-out"
+								enterFrom="transform scale-95 opacity-0"
+								enterTo="transform scale-100 opacity-100"
+								leave="transition duration-75 ease-out"
+								leaveFrom="transform scale-100 opacity-100"
+								leaveTo="transform scale-95 opacity-0"
+							>
+								<Disclosure.Panel className="px-4 pb-4 pt-2 text-sm text-gray-500 border-t">
+									{loggedInUser && (
+										<AddCommentForm
+											tripId={tripId}
+											onCommentAdded={handleCommentAdded} // Pass callback
+											token={token} // Pass token
+										/>
+									)}
+									{!loggedInUser && (
+										<p className="text-sm text-gray-500 mb-4">
+											<Link
+												href={`/login`}
+												className="text-blue-600 hover:underline"
+											>
+												Log in
+											</Link>{" "}
+											to add a comment.
+										</p>
+									)}
+									{/* Divider */}
+									<hr className="my-6" />
+									{/* Comment List */}
+									{commentsLoading ? (
+										<p>Loading comments...</p>
+									) : commentsError ? (
+										<p className="text-red-500">
+											Error loading comments: {commentsError}
+										</p>
+									) : (
+										<CommentList
+											comments={comments}
+											loggedInUser={loggedInUser._id}
+											tripId={tripId}
+											onDeleteComment={handleDeleteComment}
+										/>
+									)}
+								</Disclosure.Panel>
+							</Transition>
+						</div>
+					)}
+				</Disclosure>
 			</div>
 		</div>
 	);
