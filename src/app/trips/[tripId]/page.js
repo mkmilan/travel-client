@@ -746,7 +746,7 @@ export default function TripDetailPage() {
 					<ul className="space-y-4">
 						{trip.pointsOfInterest.map((poi, index) => (
 							<li
-								key={poi.timestamp || index}
+								key={poi?._id || poi.timestamp || index}
 								className="border-b pb-3 last:border-b-0 last:pb-0"
 							>
 								<div className="flex items-start space-x-3">
