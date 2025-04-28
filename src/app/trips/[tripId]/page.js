@@ -19,6 +19,7 @@ import {
 	FaPlus,
 	FaStar,
 	FaChevronUp,
+	FaPlusCircle,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import {
