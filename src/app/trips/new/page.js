@@ -7,12 +7,14 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import { useGpsTracker } from "@/hooks/useGpsTracker";
 import { generateGpxString } from "@/utils/gpxUtils";
+import Modal from "@/components/Modal";
 import TrackingStatusDisplay from "@/components/tracking/TrackingStatusDisplay";
 import { reverseGeocode } from "@/utils/geocoding";
 import UserNotice from "@/components/tracking/UserNotice";
 import SaveTripForm from "@/components/tracking/SaveTripForm";
+import RecommendationForm from "@/components/recommendations/RecommendationForm";
 import { API_URL } from "@/utils/config";
-import { FaMapMarkerAlt, FaSpinner } from "react-icons/fa";
+import { FaMapMarkerAlt, FaSpinner, FaPlusCircle } from "react-icons/fa";
 
 export default function NewTripPage() {
 	const { token } = useAuth();
@@ -22,11 +24,13 @@ export default function NewTripPage() {
 	// State for the save operation itself
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveError, setSaveError] = useState("");
-	const [gpxData, setGpxData] = useState(null); // Store generated GPX data
+	const [gpxData, setGpxData] = useState(null);
 	const [initialStartLocation, setInitialStartLocation] = useState("");
 	const [initialEndLocation, setInitialEndLocation] = useState("");
 	const [isFetchingLocations, setIsFetchingLocations] = useState(false);
 	const [poiDescription, setPoiDescription] = useState("");
+	const [isRecommendationModalOpen, setIsRecommendationModalOpen] =
+		useState(false);
 
 	// Generate GPX when tracking stops and data needs saving
 	useEffect(() => {
@@ -89,9 +93,10 @@ export default function NewTripPage() {
 
 		fetchLocations();
 	}, [gpxData, tracker.trackedPoints]);
+	console.log("Tracker state:", tracker);
 
 	// --- Save Trip API Call Handler ---
-	const handleSaveTrip = async (formData) => {
+	const handleSaveTrip = async (formDataFromSaveForm) => {
 		setSaveError("");
 		setIsSaving(true);
 
@@ -106,6 +111,8 @@ export default function NewTripPage() {
 			return;
 		}
 
+		let savedTripData = null;
+
 		try {
 			const res = await fetch(`${API_URL}/trips`, {
 				method: "POST",
@@ -114,11 +121,11 @@ export default function NewTripPage() {
 					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
-					...formData, // title, description, start/end names
+					...formDataFromSaveForm, // title, description, start/end names
 					gpxString: gpxData, // GPX data includes track and POIs (if gpxUtils supports it)
 				}),
 			});
-			const savedTripData = await res.json();
+			savedTripData = await res.json();
 			if (!res.ok) {
 				throw new Error(
 					savedTripData.message || `Failed to save trip (${res.status})`
@@ -126,16 +133,150 @@ export default function NewTripPage() {
 			}
 
 			console.log("Trip saved successfully:", savedTripData);
-			tracker.clearSavedTrack(); // Clear localStorage and reset tracker state
-			// No need to reset component state manually, clearSavedTrack handles it
+			// 2. Save Pending Recommendations (if any)
+			if (tracker.pendingRecommendations.length > 0 && savedTripData?._id) {
+				console.log(
+					`Attempting to save ${tracker.pendingRecommendations.length} pending recommendations...`
+				);
+				let recommendationErrors = []; // Collect errors
 
+				// Use Promise.allSettled to handle individual recommendation save attempts
+				const recommendationPromises = tracker.pendingRecommendations.map(
+					async (pendingRec, index) => {
+						try {
+							const recFormData = new FormData();
+
+							// Append text data (excluding photos, location, timestamp)
+							Object.keys(pendingRec).forEach((key) => {
+								if (
+									key !== "photos" &&
+									key !== "location" &&
+									key !== "timestamp"
+								) {
+									if (
+										key === "attributeTags" &&
+										Array.isArray(pendingRec[key])
+									) {
+										pendingRec[key].forEach((tag) =>
+											recFormData.append("attributeTags", tag)
+										);
+									} else if (
+										pendingRec[key] !== undefined &&
+										pendingRec[key] !== null
+									) {
+										recFormData.append(key, pendingRec[key]);
+									}
+								}
+							});
+
+							// Append location from the stored pendingRec.location
+							if (
+								pendingRec.location?.latitude !== undefined &&
+								pendingRec.location?.longitude !== undefined
+							) {
+								recFormData.append("latitude", pendingRec.location.latitude);
+								recFormData.append("longitude", pendingRec.location.longitude);
+							} else {
+								console.warn(
+									`Pending recommendation ${index} missing location data.`
+								);
+								// Decide if you want to skip or save without location
+							}
+
+							// Append associatedTrip ID
+							recFormData.append("associatedTrip", savedTripData._id);
+
+							// Append source (use 'TRACKING' or value from pendingRec if set)
+							// recFormData.append("source", pendingRec.source || "MANUAL");
+
+							// --- Link to POI if possible ---
+							// Find the POI in the saved trip data that matches the recommendation's timestamp
+							// This requires the backend trip save response to include POIs with timestamps and IDs
+							const matchingPoi = savedTripData.pointsOfInterest?.find(
+								(poi) =>
+									Math.abs(
+										new Date(poi.timestamp).getTime() - pendingRec.timestamp
+									) < 5000 // Match within 5 seconds
+							);
+							if (matchingPoi?._id) {
+								recFormData.append("associatedPoiId", matchingPoi._id);
+								console.log(
+									`Linked pending recommendation ${index} to POI ${matchingPoi._id}`
+								);
+							}
+							// --- End POI Linking ---
+
+							// Append photos (File objects)
+							if (pendingRec.photos && Array.isArray(pendingRec.photos)) {
+								pendingRec.photos.forEach((photoFile) => {
+									if (photoFile instanceof File) {
+										// Ensure it's a File object
+										recFormData.append("photos", photoFile);
+									} else {
+										console.warn(
+											`Item in photos array for pending rec ${index} is not a File object.`
+										);
+									}
+								});
+							}
+
+							// Make the API call
+							const recRes = await fetch(`${API_URL}/recommendations`, {
+								method: "POST",
+								headers: { Authorization: `Bearer ${token}` },
+								body: recFormData,
+							});
+							const recResult = await recRes.json();
+							if (!recRes.ok) {
+								throw new Error(
+									recResult.message ||
+										`Failed to save recommendation ${index + 1}`
+								);
+							}
+							console.log(
+								`Pending recommendation ${index + 1} saved successfully:`,
+								recResult._id
+							);
+							return { status: "fulfilled", value: recResult };
+						} catch (recError) {
+							console.error(
+								`Error saving pending recommendation ${index + 1}:`,
+								recError
+							);
+							// Store the error message
+							recommendationErrors.push(
+								`Rec ${index + 1}: ${recError.message}`
+							);
+							return { status: "rejected", reason: recError.message };
+						}
+					}
+				);
+
+				// Wait for all recommendation saves to settle
+				await Promise.allSettled(recommendationPromises);
+
+				// If there were errors saving recommendations, append them to the main saveError
+				if (recommendationErrors.length > 0) {
+					setSaveError(
+						(prev) =>
+							(prev ? prev + "\n" : "") +
+							"Some recommendations failed to save: " +
+							recommendationErrors.join("; ")
+					);
+					// Decide if you still want to proceed with clearing and redirecting
+					// For now, we proceed but show the error.
+				}
+			}
+			tracker.clearSavedTrack(); // Clear localStorage and reset tracker state
 			router.push(`/feed`); // Redirect after successful save
 		} catch (err) {
 			console.error("Error saving trip:", err);
 			setSaveError(err.message || "An unexpected error occurred during save.");
-		} finally {
 			setIsSaving(false);
 		}
+		// finally {
+		//   setIsSaving(false);
+		// }
 	};
 
 	// --- Cancel Save Handler ---
@@ -160,6 +301,27 @@ export default function NewTripPage() {
 		setPoiDescription("");
 	};
 
+	// --- Open Recommendation Modal Handler ---
+	const handleOpenRecommendationModal = () => {
+		if (tracker.currentPosition) {
+			setIsRecommendationModalOpen(true);
+		} else {
+			// Should not happen if button is disabled, but good practice
+			alert("Cannot add recommendation: Current location unknown.");
+		}
+	};
+
+	// --- Callback for successful recommendation save ---
+	const handleRecommendationSaved = (recommendationDataWithPhotos) => {
+		// console.log(
+		// 	"handleRecommendationSaved: Received data from modal:",
+		// 	recommendationDataWithPhotos
+		// );
+		// Add the data (including File objects) to the tracker's pending list
+		tracker.addPendingRecommendation(recommendationDataWithPhotos);
+		setIsRecommendationModalOpen(false);
+	};
+
 	// Determine initial title for the form
 	const initialFormTitle =
 		tracker.trackedPoints.length > 0
@@ -181,8 +343,15 @@ export default function NewTripPage() {
 	// Determine whether to show the Save Form or the Tracking UI
 	const showSaveForm =
 		tracker.needsSaving && gpxData && !tracker.isTracking && !tracker.isPaused;
-	console.log("elapsedTime", tracker.elapsedTime);
-	console.log("trackedPoints", tracker.trackedPoints);
+
+	// Prepare initial data for recommendation form if modal is open
+	const recommendationInitialData =
+		isRecommendationModalOpen && tracker.currentPosition
+			? {
+					latitude: tracker.currentPosition.lat,
+					longitude: tracker.currentPosition.lon,
+			  }
+			: {};
 
 	return (
 		<ProtectedRoute>
@@ -281,7 +450,7 @@ export default function NewTripPage() {
 									</button>
 								)}
 						</div>
-						{/* --- Add POI Section (only when tracking or paused with position) --- */}
+						{/* --- Add POI Section & Recommendation Section (only when tracking or paused with position) --- */}
 						{(tracker.isTracking || tracker.isPaused) &&
 							tracker.currentPosition && (
 								<div className="mt-8 pt-6 border-t border-gray-200">
@@ -310,6 +479,14 @@ export default function NewTripPage() {
 											{tracker.isAddingPoi ? "Adding..." : "Mark Location"}
 										</button>
 									</div>
+									{/* Add Recommendation Button */}
+									<button
+										onClick={handleOpenRecommendationModal}
+										className="bg-purple-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center justify-center w-full sm:w-auto"
+									>
+										<FaPlusCircle className="mr-2" />
+										Add Recommendation Here
+									</button>
 								</div>
 							)}
 						{/* --- Display POIs --- */}
@@ -335,6 +512,26 @@ export default function NewTripPage() {
 								</ul>
 							</div>
 						)}
+						{/* --- Display Pending Recommendations --- */}
+						{tracker.pendingRecommendations.length > 0 && (
+							<div className="mt-6 p-3 bg-purple-50 border border-purple-200 rounded">
+								<h4 className="text-md font-semibold text-purple-800 mb-2">
+									Pending Recommendations:{" "}
+									{tracker.pendingRecommendations.length}
+								</h4>
+								<ul className="list-disc list-inside space-y-1 text-sm text-purple-700">
+									{tracker.pendingRecommendations.map((rec, index) => (
+										// Use rec.timestamp or index as key, ensure rec.name exists
+										<li key={rec.timestamp || index}>
+											{rec.name || `Recommendation ${index + 1}`}
+										</li>
+									))}
+								</ul>
+								<p className="text-xs text-purple-600 mt-2">
+									These will be saved when you finish the trip.
+								</p>
+							</div>
+						)}
 					</>
 				) : (
 					// --- Save Form View ---
@@ -347,7 +544,10 @@ export default function NewTripPage() {
 						<SaveTripForm
 							initialTitle={initialFormTitle}
 							pointsCount={tracker.trackedPoints.length}
-							poisCount={tracker.pointsOfInterest.length} // Pass POI count
+							poisCount={tracker.pointsOfInterest.length}
+							pendingRecommendationsCount={
+								tracker.pendingRecommendations.length
+							}
 							onSave={handleSaveTrip}
 							// onCancel is handled by buttons below
 							isSaving={isSaving}
@@ -386,6 +586,20 @@ export default function NewTripPage() {
 					</>
 				)}
 			</div>
+			{/* --- Recommendation Modal --- */}
+			<Modal
+				isOpen={isRecommendationModalOpen}
+				onClose={() => setIsRecommendationModalOpen(false)}
+				title="Add Recommendation at Current Location"
+			>
+				<RecommendationForm
+					initialData={recommendationInitialData}
+					// source="TRACKING" // Indicate it was created during tracking
+					source="MANUAL" // Indicate it was created during tracking
+					onSuccess={handleRecommendationSaved} // Pass callback
+					// We don't pass associatedTripId or associatedPoiId
+				/>
+			</Modal>
 		</ProtectedRoute>
 	);
 }

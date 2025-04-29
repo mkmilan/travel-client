@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+	allowedDevOrigins: ["192.168.100.14"],
 	images: {
 		// domains: ["localhost", "https://travel-server-fdxh.onrender.com"],
 		remotePatterns: [

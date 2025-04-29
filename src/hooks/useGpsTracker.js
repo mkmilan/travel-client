@@ -23,6 +23,7 @@ export function useGpsTracker() {
 	const [needsSaving, setNeedsSaving] = useState(false); // Flag if restored data needs action
 	const [isInitializing, setIsInitializing] = useState(true);
 	const [isAddingPoi, setIsAddingPoi] = useState(false);
+	const [pendingRecommendations, setPendingRecommendations] = useState([]);
 
 	const elapsedTimeRef = useRef(elapsedTime);
 	const watchIdRef = useRef(null);
@@ -35,7 +36,7 @@ export function useGpsTracker() {
 
 	// --- LocalStorage Handling ---
 	const saveTrackToLocalStorage = useCallback(
-		(points, time, trackStartTime, pois, paused) => {
+		(points, time, trackStartTime, pois, paused, pendingRecs) => {
 			// Also save elapsedTime and maybe startTime if needed for resume later
 			const trackData = {
 				points,
@@ -43,6 +44,10 @@ export function useGpsTracker() {
 				startTime: trackStartTime,
 				pointsOfInterest: pois,
 				isPaused: paused ? "paused" : points.length > 0 ? "stopped" : "idle",
+				pendingRecommendations: pendingRecs.map((rec) => {
+					const { photos, ...rest } = rec; // Exclude File objects
+					return rest;
+				}),
 			};
 			try {
 				localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(trackData));
@@ -58,7 +63,8 @@ export function useGpsTracker() {
 	const clearSavedTrack = useCallback(() => {
 		localStorage.removeItem(LOCAL_STORAGE_KEY);
 		setTrackedPoints([]);
-		setPointsOfInterest([]); // Clear POIs state
+		setPointsOfInterest([]);
+		setPendingRecommendations([]);
 		setElapsedTime(0);
 		setStartTime(null);
 		setCurrentPosition(null);
@@ -81,8 +87,9 @@ export function useGpsTracker() {
 					console.log(
 						`Restoring track data. Status: ${savedTrack.status}, Points: ${savedTrack.points.length}`
 					);
+					setPointsOfInterest(savedTrack.pointsOfInterest || []);
+					setPendingRecommendations(savedTrack.pendingRecommendations || []);
 					setTrackedPoints(savedTrack.points);
-					setPointsOfInterest(savedTrack.pointsOfInterest || []); // Restore POIs
 					setElapsedTime(savedTrack.elapsedTime || 0);
 					setStartTime(savedTrack.startTime || null);
 
@@ -124,6 +131,7 @@ export function useGpsTracker() {
 			// Ensure initial state is clean if nothing is loaded
 			setTrackedPoints([]);
 			setPointsOfInterest([]);
+			setPendingRecommendations([]);
 			setElapsedTime(0);
 			setStartTime(null);
 			setIsPaused(false);
@@ -243,14 +251,7 @@ export function useGpsTracker() {
 			geoOptions
 		);
 		return true; // Indicate success
-	}, [
-		isTracking,
-		isPaused,
-		startTimer,
-		stopTimer,
-		startTime,
-		pointsOfInterest,
-	]); // Dependencies for watcher logic
+	}, [isTracking, isPaused, startTimer, stopTimer, startTime]); // Dependencies for watcher logic
 
 	const stopWatcher = useCallback(() => {
 		if (watchIdRef.current !== null) {
@@ -308,7 +309,8 @@ export function useGpsTracker() {
 			elapsedTime,
 			startTime,
 			pointsOfInterest,
-			true
+			true,
+			pendingRecommendations
 		);
 		console.log("Tracking paused.");
 	}, [
@@ -320,6 +322,7 @@ export function useGpsTracker() {
 		startTime,
 		pointsOfInterest,
 		saveTrackToLocalStorage,
+		pendingRecommendations,
 	]);
 
 	const resumeTracking = useCallback(() => {
@@ -354,7 +357,8 @@ export function useGpsTracker() {
 				elapsedTime,
 				startTime,
 				pointsOfInterest,
-				false
+				false,
+				pendingRecommendations
 			);
 			console.log("Tracking stopped. Ready to save.");
 		} else {
@@ -369,6 +373,7 @@ export function useGpsTracker() {
 		elapsedTime,
 		startTime,
 		pointsOfInterest,
+		pendingRecommendations,
 		clearSavedTrack,
 		saveTrackToLocalStorage,
 	]);
@@ -410,20 +415,73 @@ export function useGpsTracker() {
 							: poi
 					)
 				);
-				setIsAddingPoi(false);
+
 				// Re-save to localStorage with updated POI name
+				setPointsOfInterest((currentPois) => {
+					const updatedPois = currentPois.map((poi) =>
+						poi.timestamp === timestamp
+							? { ...poi, name: locationName || "Unknown" }
+							: poi
+					);
+					// Save inside the setter callback to ensure latest state
+					saveTrackToLocalStorage(
+						trackedPoints,
+						elapsedTime,
+						startTime,
+						updatedPois, // <-- Use updated POIs
+						isPaused,
+						pendingRecommendations // <-- Pass pending recs
+					);
+					return updatedPois;
+				});
+			}
+			setIsAddingPoi(false);
+		},
+		[
+			currentPosition,
+			isAddingPoi,
+			trackedPoints,
+			elapsedTime,
+			startTime,
+			// pointsOfInterest,// State is accessed via setter callback now
+			pendingRecommendations,
+			isPaused,
+			saveTrackToLocalStorage,
+		]
+	);
+
+	// --- Add Pending Recommendation ---
+	const addPendingRecommendation = useCallback(
+		(recommendationDataWithPhotos) => {
+			// recommendationDataWithPhotos includes form fields and File objects
+			// Add current location and a timestamp for potential POI linking
+			const dataWithMeta = {
+				...recommendationDataWithPhotos, // Includes photos (File objects)
+				timestamp: Date.now(), // Timestamp when rec was added via modal
+				location: {
+					// Store location explicitly at time of adding
+					latitude: currentPosition?.lat,
+					longitude: currentPosition?.lon,
+				},
+			};
+			console.log("Adding pending recommendation:", dataWithMeta);
+			setPendingRecommendations((prev) => {
+				const updatedRecs = [...prev, dataWithMeta];
+				// Save state immediately after adding
+				// Note: saveTrackToLocalStorage will strip File objects before saving
 				saveTrackToLocalStorage(
 					trackedPoints,
 					elapsedTime,
 					startTime,
 					pointsOfInterest,
-					isPaused
+					isPaused,
+					updatedRecs // <-- Pass updated recs
 				);
-			}
+				return updatedRecs;
+			});
 		},
 		[
 			currentPosition,
-			isAddingPoi,
 			trackedPoints,
 			elapsedTime,
 			startTime,
@@ -461,17 +519,35 @@ export function useGpsTracker() {
 				speed: 5.9,
 			},
 		];
+		const dummyElapsedTime = 90;
+		const dummyStartTime = now;
+		const dummyPois = []; // Start with no dummy POIs initially
+		const dummyPendingRecs = [];
 		setTrackedPoints(dummyPoints);
 		setCurrentPosition({
 			lat: dummyPoints[dummyPoints.length - 1].lat,
 			lon: dummyPoints[dummyPoints.length - 1].lon,
 			accuracy: 5,
 		});
-		setElapsedTime(90);
-		setIsTracking(false); // Set tracking to false, ready to "stop"
-		setNeedsSaving(true); // Mark as needing save
-		saveTrackToLocalStorage(dummyPoints); // Also save dummy points for persistence testing
-		console.log("Dummy points added and saved to localStorage.");
+		setElapsedTime(dummyElapsedTime);
+		setStartTime(dummyStartTime);
+		setIsTracking(false); // Start in a non-tracking state initially
+		setIsPaused(true); // Set to paused state to show Resume/Stop buttons
+		setNeedsSaving(false); // Not ready for saving yet
+		setPointsOfInterest(dummyPois); // Set initial empty POIs
+		setPendingRecommendations(dummyPendingRecs);
+
+		saveTrackToLocalStorage(
+			dummyPoints,
+			dummyElapsedTime,
+			dummyStartTime,
+			dummyPois,
+			true, // isPaused = true
+			dummyPendingRecs
+		);
+		console.log(
+			"Dummy points added and loaded into a PAUSED state. Resume or Stop to proceed."
+		);
 	}, [saveTrackToLocalStorage, clearSavedTrack]);
 
 	// Cleanup on unmount
@@ -507,6 +583,8 @@ export function useGpsTracker() {
 		resumeTracking, // Expose resume
 		stopTracking, // This is now "Final Stop"
 		addPointOfInterest, // Expose POI function
+		addPendingRecommendation,
+		pendingRecommendations,
 		clearSavedTrack,
 		addDummyPoints,
 	};

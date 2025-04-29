@@ -6,6 +6,7 @@ export default function SaveTripForm({
 	initialTitle = "",
 	pointsCount,
 	poisCount,
+	pendingRecommendationsCount = 0,
 	onSave,
 	// onCancel,
 	isSaving,
@@ -144,9 +145,17 @@ export default function SaveTripForm({
 					</div>
 				</div>
 				{/* Summary Info */}
-				<div className="text-sm text-gray-600 pt-2">
+				<div className="text-sm text-gray-600 pt-2 space-y-1">
 					<p>Points Recorded: {pointsCount}</p>
 					<p>Points of Interest Marked: {poisCount}</p>
+					{/* Display Pending Recommendations Count */}
+					{pendingRecommendationsCount > 0 && (
+						<p className="text-purple-700 font-medium">
+							{" "}
+							{/* Style pending count */}
+							Pending Recommendations to Save: {pendingRecommendationsCount}
+						</p>
+					)}
 				</div>
 				{/* Save Error Display */}
 				{saveError && (

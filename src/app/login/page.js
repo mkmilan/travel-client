@@ -23,6 +23,7 @@ export default function LoginPage() {
 				setLoading(false);
 				return;
 			}
+			console.log("API_URL", API_URL);
 
 			// Make API Call
 			const res = await fetch(`${API_URL}/auth/login`, {

@@ -1,7 +1,7 @@
 // filepath: /home/mkmilan/Documents/my/travel-2/client/src/components/recommendations/RecommendationForm.js
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -41,6 +41,8 @@ export default function RecommendationForm({
 	associatedTripId = null,
 	associatedPoiId = null,
 	source = "MANUAL",
+	onSuccess = () => {},
+	isModal = false,
 }) {
 	const router = useRouter();
 	const { token } = useAuth();
@@ -59,6 +61,22 @@ export default function RecommendationForm({
 	const [photos, setPhotos] = useState([]); // Array of File objects
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
+
+	// Effect to update form data if initialData changes (e.g., for editing or modal)
+	useEffect(() => {
+		setFormData({
+			name: initialData.name || "",
+			description: initialData.description || "",
+			rating: initialData.rating || 0,
+			primaryCategory: initialData.primaryCategory || "",
+			attributeTags: initialData.attributeTags || [],
+			latitude: initialData.latitude || "",
+			longitude: initialData.longitude || "",
+		});
+		// Reset photos when initial data changes? Or handle previews if editing?
+		// For simplicity now, just reset files.
+		setPhotos([]);
+	}, []);
 
 	const handleInputChange = (e) => {
 		const { name, value } = e.target;
@@ -117,6 +135,24 @@ export default function RecommendationForm({
 			return;
 		}
 
+		// --- Check if in Modal Context (using onSuccess prop) ---
+		// const isModalContext =
+		// 	onSuccess !== RecommendationForm.defaultProps.onSuccess;
+
+		if (isModal) {
+			// Pass data back via onSuccess callback
+			console.log(
+				"RecommendationForm (Modal Context): Calling onSuccess with data and photos:",
+				formData,
+				photos
+			);
+			onSuccess({ ...formData, photos }); // Pass form data and File objects
+			return; // Stop here, don't submit to API
+		}
+
+		// --- Standalone Context: Proceed with API Submission ---
+		setIsSubmitting(true);
+
 		const submissionData = new FormData();
 		Object.keys(formData).forEach((key) => {
 			if (key === "attributeTags") {
@@ -131,24 +167,41 @@ export default function RecommendationForm({
 		});
 		// --- Add associatedTripId if present ---
 		if (associatedTripId) {
+			console.log("Appending associatedPoiId:", associatedPoiId);
 			submissionData.append("associatedTrip", associatedTripId);
 		}
 
 		if (associatedPoiId) {
+			console.log("Appending associatedPoiId:", associatedPoiId);
 			submissionData.append("associatedPoiId", associatedPoiId);
 		}
 		submissionData.append("source", source);
+		console.log("Appending source:", source);
 		// Append photos
 		photos.forEach((photo) => {
 			submissionData.append("photos", photo); // Match the field name used in multerConfig
 		});
 
 		try {
-			const response = await fetch(`${API_URL}/recommendations`, {
-				method: "POST",
+			// const response = await fetch(`${API_URL}/recommendations`, {
+			// 	method: "POST",
+			// 	headers: {
+			// 		Authorization: `Bearer ${token}`,
+			// 		// 'Content-Type': 'multipart/form-data' is set automatically by browser with FormData
+			// 	},
+			// 	body: submissionData,
+			// });
+			// Determine API endpoint and method based on isEditing
+			const apiUrl = isEditing
+				? `${API_URL}/recommendations/${initialData._id}` // Ensure initialData has _id when editing
+				: `${API_URL}/recommendations`;
+			const method = isEditing ? "PUT" : "POST";
+
+			const response = await fetch(apiUrl, {
+				method: method,
 				headers: {
 					Authorization: `Bearer ${token}`,
-					// 'Content-Type': 'multipart/form-data' is set automatically by browser with FormData
+					// No 'Content-Type' for FormData
 				},
 				body: submissionData,
 			});
@@ -158,15 +211,15 @@ export default function RecommendationForm({
 			if (!response.ok) {
 				throw new Error(result.message || "Failed to create recommendation");
 			}
-
+			onSuccess(result);
 			console.log("Recommendation created:", result);
-			// Redirect to the new recommendation's detail page (or a list page)
-			// For now, let's redirect to a general recommendations list page (we'll create this later)
-			// router.push("/recommendations");
+
 			if (associatedTripId) {
 				router.push(`/trips/${associatedTripId}`);
+			} else if (isEditing) {
+				router.push(`/recommendations/${initialData._id}`); // Or wherever edited items go
 			} else {
-				router.push("/recommendations"); // Fallback if no tripId
+				router.push("/trips/new"); // Default redirect for standalone creation
 			}
 		} catch (err) {
 			console.error("Submission error:", err);
@@ -175,6 +228,11 @@ export default function RecommendationForm({
 			setIsSubmitting(false);
 		}
 	};
+
+	// Add default props for the check above
+	// RecommendationForm.defaultProps = {
+	// 	onSuccess: () => {},
+	// };
 
 	const selectedCategoryLabel =
 		RECOMMENDATION_CATEGORIES.find(
@@ -288,38 +346,6 @@ export default function RecommendationForm({
 				/>
 			</div>
 
-			{/* Primary Category */}
-			{/* <div>
-				<label
-					htmlFor="primaryCategory"
-					className="block text-sm font-medium text-gray-700"
-				>
-					Primary Category
-				</label>
-				<select
-					id="primaryCategory"
-					name="primaryCategory"
-					value={formData.primaryCategory}
-					onChange={handleInputChange}
-					required
-					className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-				>
-					<option
-						value=""
-						disabled
-					>
-						-- Select a Category --
-					</option>
-					{RECOMMENDATION_CATEGORIES.map((cat) => (
-						<option
-							key={cat.value}
-							value={cat.value}
-						>
-							{cat.label}
-						</option>
-					))}
-				</select>
-			</div> */}
 			<div>
 				<Listbox
 					value={formData.primaryCategory}
@@ -450,11 +476,20 @@ export default function RecommendationForm({
 					disabled={isSubmitting}
 					className="w-full flex justify-center py-3 px-4 border border-transparent  shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 				>
-					{isSubmitting
+					{/* {isSubmitting
 						? "Submitting..."
 						: isEditing
 						? "Update Recommendation"
-						: "Create Recommendation"}
+						: "Create Recommendation"} */}
+					{
+						isSubmitting
+							? "Saving..."
+							: isModal
+							? "Add to Pending List" // Text for modal context
+							: isEditing
+							? "Update Recommendation"
+							: "Create Recommendation" // Text for standalone context
+					}
 				</button>
 			</div>
 		</form>
