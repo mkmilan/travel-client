@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
@@ -12,9 +14,20 @@ import {
 } from "@/utils/constants";
 import LoadingComponent from "@/components/LoadingComponent";
 import ProfilePicture from "@/components/ProfilePicture";
-import Modal from "@/components/Modal"; // For image modal
+import Modal from "@/components/Modal";
 import { FaStar, FaMapMarkerAlt, FaTag, FaCalendarAlt } from "react-icons/fa";
 
+const RecommendationMap = dynamic(
+	() => import("@/components/map/RecommendationMap"),
+	{
+		ssr: false, // Disable Server-Side Rendering for this component
+		loading: () => (
+			<div className="bg-gray-200 h-80 md:h-96 flex items-center justify-center text-gray-600">
+				Loading Map...
+			</div>
+		), // Optional loading indicator
+	}
+);
 // Reusable Static Star Rating (could be moved to a shared components dir)
 const StaticStarRating = ({ rating }) => {
 	return (
@@ -98,7 +111,7 @@ export default function RecommendationDetailPage() {
 		createdAt,
 		updatedAt,
 		associatedTrip, // For linking back if needed
-	} = recommendation;
+	} = recommendation || {};
 
 	const categoryLabel = getRecommendationCategoryLabel(primaryCategory);
 	const tagLabels = attributeTags?.map(getRecommendationTagLabel) || [];
@@ -210,8 +223,15 @@ export default function RecommendationDetailPage() {
 					<p className="text-sm text-gray-600">
 						Coordinates: {latitude.toFixed(5)}, {longitude.toFixed(5)}
 					</p>
-					{/* TODO: Add a small static map here later */}
-					{/* Example: <MiniMap latitude={latitude} longitude={longitude} /> */}
+					<div className="h-48 md:h-64 w-full border rounded overflow-hidden">
+						<Suspense fallback={<LoadingComponent message="Loading map..." />}>
+							<RecommendationMap
+								latitude={latitude}
+								longitude={longitude}
+								popupText={name} // Optional: text for map marker popup
+							/>
+						</Suspense>
+					</div>
 				</div>
 
 				{/* Photos */}
