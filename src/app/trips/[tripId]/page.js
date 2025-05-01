@@ -737,54 +737,84 @@ export default function TripDetailPage() {
 			{/* --- Points of Interest Section --- */}
 			{poiCount > 0 && (
 				<div
-					id="pois"
-					className="bg-white p-6 shadow-md border border-gray-200 mb-6 scroll-mt-20" // Added scroll margin
+					id="pois" // Keep ID here for anchor links
+					className="bg-white shadow-md border border-gray-200 mb-6 scroll-mt-20" // Keep scroll margin
 				>
-					<h2 className="text-xl font-semibold text-gray-800 mb-4">
-						Points of Interest ({poiCount})
-					</h2>
-					<ul className="space-y-4">
-						{trip.pointsOfInterest.map((poi, index) => (
-							<li
-								key={poi?._id || poi.timestamp || index}
-								className="border-b pb-3 last:border-b-0 last:pb-0"
-							>
-								<div className="flex items-start space-x-3">
-									<FaMapMarkerAlt className="text-blue-500 mt-1 h-4 w-4 flex-shrink-0" />
-									<div>
-										<p className="font-semibold text-gray-800">
-											{poi.name || `POI ${index + 1}`}
-										</p>
-										{poi.description && (
-											<p className="text-sm text-gray-600 mt-1">
-												{poi.description}
-											</p>
-										)}
-										<p className="text-xs text-gray-500 mt-1">
-											Marked at: {new Date(poi.timestamp).toLocaleString()} (
-											{poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
-										</p>
-									</div>
-									{loggedInUser && ( // Only show if logged in
-										<Link
-											href={`/recommendations/new?tripId=${tripId}&poiId=${
-												poi._id
-											}&lat=${poi.lat}&lon=${
-												poi.lon
-											}&poiName=${encodeURIComponent(
-												poi.name || ""
-											)}&poiDesc=${encodeURIComponent(poi.description || "")}`}
-											title="Create recommendation from this POI"
-											className="flex-shrink-0 p-1 text-indigo-600 hover:text-indigo-800 transition-colors"
-										>
-											<FaPlusCircle className="w-5 h-5" />
-											<span className="sr-only">Create Recommendation</span>
-										</Link>
-									)}
-								</div>
-							</li>
-						))}
-					</ul>
+					<Disclosure>
+						{({ open }) => (
+							<div>
+								<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
+									<span>Points of Interest ({poiCount})</span>
+									<FaChevronUp
+										className={`${
+											open ? "" : "rotate-180 transform"
+										} h-5 w-5 text-gray-500 transition-transform`}
+									/>
+								</Disclosure.Button>
+								<Transition
+									enter="transition duration-100 ease-out"
+									enterFrom="transform scale-95 opacity-0"
+									enterTo="transform scale-100 opacity-100"
+									leave="transition duration-75 ease-out"
+									leaveFrom="transform scale-100 opacity-100"
+									leaveTo="transform scale-95 opacity-0"
+								>
+									<Disclosure.Panel className="px-4 pb-4 pt-2 text-sm text-gray-500 border-t">
+										{/* Existing POI list logic goes inside the Panel */}
+										<ul className="space-y-4 mt-4">
+											{" "}
+											{/* Added mt-4 for spacing */}
+											{trip.pointsOfInterest.map((poi, index) => (
+												<li
+													key={poi?._id || poi.timestamp || index}
+													className="border-b pb-3 last:border-b-0 last:pb-0"
+												>
+													<div className="flex items-start space-x-3">
+														<FaMapMarkerAlt className="text-blue-500 mt-1 h-4 w-4 flex-shrink-0" />
+														<div>
+															<p className="font-semibold text-gray-800">
+																{poi.name || `POI ${index + 1}`}
+															</p>
+															{poi.description && (
+																<p className="text-sm text-gray-600 mt-1">
+																	{poi.description}
+																</p>
+															)}
+															<p className="text-xs text-gray-500 mt-1">
+																Marked at:{" "}
+																{new Date(poi.timestamp).toLocaleString()} (
+																{poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
+															</p>
+														</div>
+														{loggedInUser && ( // Only show if logged in
+															<Link
+																href={`/recommendations/new?tripId=${tripId}&poiId=${
+																	poi._id
+																}&lat=${poi.lat}&lon=${
+																	poi.lon
+																}&poiName=${encodeURIComponent(
+																	poi.name || ""
+																)}&poiDesc=${encodeURIComponent(
+																	poi.description || ""
+																)}`}
+																title="Create recommendation from this POI"
+																className="flex-shrink-0 p-1 text-indigo-600 hover:text-indigo-800 transition-colors"
+															>
+																<FaPlusCircle className="w-5 h-5" />
+																<span className="sr-only">
+																	Create Recommendation
+																</span>
+															</Link>
+														)}
+													</div>
+												</li>
+											))}
+										</ul>
+									</Disclosure.Panel>
+								</Transition>
+							</div>
+						)}
+					</Disclosure>
 				</div>
 			)}
 
