@@ -693,12 +693,54 @@ export default function TripDetailPage() {
 				)}
 			</div>
 
+			{/* --- Like and Comment Counts --- */}
+			<div className="flex items-center  space-x-6 text-sm text-gray-600 border-t py-3 px-4 sm:px-6">
+				<button
+					onClick={handleLikeToggle}
+					disabled={likeInProgress || !loggedInUser}
+					className={`flex items-center p-1 rounded hover:bg-red-100 disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-150 ${
+						isLikedByMe ? "text-red-500" : "text-gray-500"
+					}`}
+					aria-label={isLikedByMe ? "Unlike trip" : "Like trip"}
+				>
+					{isLikedByMe ? (
+						<FaHeart className="mr-1 h-4 w-4" />
+					) : (
+						<FaRegHeart className="mr-1 h-4 w-4" />
+					)}
+					<span
+						className="font-medium cursor-pointer hover:underline"
+						onClick={(e) => {
+							e.stopPropagation(); // Prevent like toggle if clicking the number
+							handleOpenLikersModal();
+						}}
+						title="View likes"
+					>
+						{localLikesCount} {localLikesCount === 1 ? "like" : "likes"}
+					</span>
+				</button>
+				<a // Use an anchor tag to jump to comments section
+					href="#comments"
+					className="flex items-center hover:underline"
+					onClick={(e) => {
+						// Smooth scroll if possible
+						e.preventDefault();
+						document
+							.getElementById("comments")
+							?.scrollIntoView({ behavior: "smooth" });
+					}}
+				>
+					<FaRegComment className="mr-1 text-blue-500 h-4 w-4" />
+					<span>
+						{comments?.length ?? trip.commentsCount ?? 0}{" "}
+						{comments?.length === 1 ? "comment" : "comments"}
+					</span>
+				</a>
+			</div>
+
 			{/* --- Photos Section --- */}
 			<div className="bg-white   shadow-md border border-gray-200 mb-6">
-				{/* <h2 className="text-xl font-semibold text-gray-800 mb-4">
-					Photos ({trip.photos?.length || 0})
-				</h2> */}
-				{trip.photos && trip.photos.length > 0 ? (
+				{trip.photos && trip.photos.length > 0 && (
 					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
 						{trip.photos.map((photoId) => {
 							const imageUrl = `${API_URL}/photos/${photoId}`;
@@ -727,10 +769,6 @@ export default function TripDetailPage() {
 							);
 						})}
 					</div>
-				) : (
-					<p className="text-gray-600">No photos uploaded for this trip yet.</p>
-					// Optionally show upload button here for owner
-					// {isOwner && <Link href={`/trips/${tripId}/edit`} className="...">Add Photos</Link>}
 				)}
 			</div>
 
@@ -859,51 +897,6 @@ export default function TripDetailPage() {
 						</div>
 					)}
 				</Disclosure>
-			</div>
-
-			{/* --- Like and Comment Counts --- */}
-			<div className="flex items-center space-x-6 text-sm text-gray-600 border-t pt-4 px-4 sm:px-6">
-				<button
-					onClick={handleLikeToggle}
-					disabled={likeInProgress || !loggedInUser}
-					className={`flex items-center p-1 rounded hover:bg-red-100 disabled:opacity-70 disabled:cursor-not-allowed transition-colors duration-150 ${
-						isLikedByMe ? "text-red-500" : "text-gray-500"
-					}`}
-					aria-label={isLikedByMe ? "Unlike trip" : "Like trip"}
-				>
-					{isLikedByMe ? (
-						<FaHeart className="mr-1 h-4 w-4" />
-					) : (
-						<FaRegHeart className="mr-1 h-4 w-4" />
-					)}
-					<span
-						className="font-medium cursor-pointer hover:underline"
-						onClick={(e) => {
-							e.stopPropagation(); // Prevent like toggle if clicking the number
-							handleOpenLikersModal();
-						}}
-						title="View likes"
-					>
-						{localLikesCount} {localLikesCount === 1 ? "like" : "likes"}
-					</span>
-				</button>
-				<a // Use an anchor tag to jump to comments section
-					href="#comments"
-					className="flex items-center hover:underline"
-					onClick={(e) => {
-						// Smooth scroll if possible
-						e.preventDefault();
-						document
-							.getElementById("comments")
-							?.scrollIntoView({ behavior: "smooth" });
-					}}
-				>
-					<FaRegComment className="mr-1 text-blue-500" />
-					<span>
-						{comments?.length ?? trip.commentsCount ?? 0}{" "}
-						{comments?.length === 1 ? "comment" : "comments"}
-					</span>
-				</a>
 			</div>
 
 			{/* Comments Section (Placeholder) */}

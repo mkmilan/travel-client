@@ -11,29 +11,20 @@ import {
 import { API_URL } from "@/utils/config";
 import { FaStar, FaRegStar, FaCheck, FaChevronDown } from "react-icons/fa";
 import { Listbox, Transition } from "@headlessui/react";
+import dynamic from "next/dynamic";
+import { StarRating } from "@/utils/starRating";
 
-// Simple Star Rating Component
-const StarRating = ({ rating, setRating }) => {
-	return (
-		<div className="flex space-x-1">
-			{[1, 2, 3, 4, 5].map((star) => (
-				<button
-					key={star}
-					type="button" // Prevent form submission
-					onClick={() => setRating(star)}
-					className="text-yellow-500 focus:outline-none"
-					aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-				>
-					{rating >= star ? (
-						<FaStar className="w-6 h-6" />
-					) : (
-						<FaRegStar className="w-6 h-6" />
-					)}
-				</button>
-			))}
-		</div>
-	);
-};
+const LocationPicker = dynamic(
+	() => import("@/components/map/LocationPicker"),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="h-64 w-full bg-gray-200 flex items-center justify-center text-gray-500">
+				Loading Map...
+			</div>
+		),
+	}
+);
 
 export default function RecommendationForm({
 	initialData = {}, // For potential editing later
@@ -56,11 +47,17 @@ export default function RecommendationForm({
 		// longitude: initialData.location?.coordinates?.[0] || "", // Lon is index 0
 		latitude: initialData.latitude || "",
 		longitude: initialData.longitude || "",
+		photos: [],
+		associatedTrip: "",
+		sourcePoi: null,
 	});
 
 	const [photos, setPhotos] = useState([]); // Array of File objects
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
+
+	// Determine if location was pre-filled (useful for deciding to show map)
+	const locationPreFilled = !!initialData.latitude && !!initialData.longitude;
 
 	// Effect to update form data if initialData changes (e.g., for editing or modal)
 	useEffect(() => {
@@ -112,6 +109,15 @@ export default function RecommendationForm({
 			const selectedFiles = Array.from(e.target.files).slice(0, 5);
 			setPhotos(selectedFiles);
 		}
+	};
+
+	// Handler for when the map selects a location
+	const handleLocationSelect = (lat, lon) => {
+		setFormData((prev) => ({
+			...prev,
+			latitude: lat.toFixed(6), // Store with reasonable precision
+			longitude: lon.toFixed(6),
+		}));
 	};
 
 	const handleSubmit = async (e) => {
@@ -291,46 +297,61 @@ export default function RecommendationForm({
 			</div>
 
 			{/* Location (Lat/Lon Inputs) */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<div>
-					<label
-						htmlFor="latitude"
-						className="block text-sm font-medium text-gray-700"
-					>
-						Latitude
-					</label>
-					<input
-						type="number"
-						id="latitude"
-						name="latitude"
-						value={formData.latitude}
-						onChange={handleInputChange}
-						required
-						step="any" // Allow decimals
-						placeholder="e.g., 40.7128"
-						className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-					/>
-				</div>
-				<div>
-					<label
-						htmlFor="longitude"
-						className="block text-sm font-medium text-gray-700"
-					>
-						Longitude
-					</label>
-					<input
-						type="number"
-						id="longitude"
-						name="longitude"
-						value={formData.longitude}
-						onChange={handleInputChange}
-						required
-						step="any"
-						placeholder="e.g., -74.0060"
-						className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-					/>
+			<div>
+				<label className="block text-sm font-medium text-gray-700 mb-2">
+					Location *
+				</label>
+				{/* Conditionally render Map Picker if location wasn't pre-filled */}
+				{!locationPreFilled && (
+					<div className="mb-4 border p-2">
+						<LocationPicker onLocationSelect={handleLocationSelect} />
+						<p className="text-xs text-gray-500 mt-1 text-center">
+							Click on the map to set the recommendation location.
+						</p>
+					</div>
+				)}
+				<div className="grid grid-cols-2 gap-4">
+					<div>
+						<label
+							htmlFor="latitude"
+							className="block text-sm font-medium text-gray-700"
+						>
+							Latitude
+						</label>
+						<input
+							type="number"
+							id="latitude"
+							name="latitude"
+							value={formData.latitude}
+							onChange={handleInputChange}
+							required
+							step="any" // Allow decimals
+							placeholder="e.g., 40.7128"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+						/>
+					</div>
+					<div>
+						<label
+							htmlFor="longitude"
+							className="block text-sm font-medium text-gray-700"
+						>
+							Longitude
+						</label>
+						<input
+							type="number"
+							id="longitude"
+							name="longitude"
+							value={formData.longitude}
+							onChange={handleInputChange}
+							required
+							step="any"
+							placeholder="e.g., -74.0060"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+						/>
+					</div>
 				</div>
 			</div>
+
 			<p className="text-xs text-gray-500">
 				Enter coordinates manually for now. Map input will be added later.
 			</p>
