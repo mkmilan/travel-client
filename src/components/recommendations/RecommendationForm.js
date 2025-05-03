@@ -9,7 +9,13 @@ import {
 	RECOMMENDATION_TAGS,
 } from "@/utils/constants";
 import { API_URL } from "@/utils/config";
-import { FaStar, FaRegStar, FaCheck, FaChevronDown } from "react-icons/fa";
+import {
+	FaStar,
+	FaRegStar,
+	FaCheck,
+	FaChevronDown,
+	FaMapMarkerAlt,
+} from "react-icons/fa";
 import { Listbox, Transition } from "@headlessui/react";
 import dynamic from "next/dynamic";
 import { StarRating } from "@/utils/starRating";
@@ -21,6 +27,19 @@ const LocationPicker = dynamic(
 		loading: () => (
 			<div className="h-64 w-full bg-gray-200 flex items-center justify-center text-gray-500">
 				Loading Map...
+			</div>
+		),
+	}
+);
+
+// Dynamically import RecommendationMap (for displaying existing locations)
+const RecommendationMap = dynamic(
+	() => import("@/components/map/RecommendationMap"),
+	{
+		ssr: false,
+		loading: () => (
+			<div className="h-32 w-full bg-gray-200 flex items-center justify-center text-gray-500">
+				Loading Map Preview...
 			</div>
 		),
 	}
@@ -55,9 +74,9 @@ export default function RecommendationForm({
 	const [photos, setPhotos] = useState([]); // Array of File objects
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
-
-	// Determine if location was pre-filled (useful for deciding to show map)
-	const locationPreFilled = !!initialData.latitude && !!initialData.longitude;
+	const [tripRouteGeoJson, setTripRouteGeoJson] = useState(null);
+	const [routeLoading, setRouteLoading] = useState(false);
+	const [routeError, setRouteError] = useState("");
 
 	// Effect to update form data if initialData changes (e.g., for editing or modal)
 	useEffect(() => {
@@ -74,6 +93,43 @@ export default function RecommendationForm({
 		// For simplicity now, just reset files.
 		setPhotos([]);
 	}, []);
+
+	// Determine if location was pre-filled (useful for deciding to show map)
+	const locationPreFilled = !!initialData.latitude && !!initialData.longitude;
+
+	// Effect to fetch trip route if needed
+	useEffect(() => {
+		// Only fetch if we have a trip ID and location wasn't pre-filled
+		if (associatedTripId && !locationPreFilled) {
+			const fetchTripRoute = async () => {
+				setRouteLoading(true);
+				setRouteError("");
+				setTripRouteGeoJson(null); // Reset previous route
+				try {
+					const response = await fetch(`${API_URL}/trips/${associatedTripId}`);
+					if (!response.ok) {
+						throw new Error("Failed to fetch trip route data");
+					}
+					const tripData = await response.json();
+					if (tripData.simplifiedRoute) {
+						setTripRouteGeoJson(tripData.simplifiedRoute);
+					} else {
+						console.warn("Trip data fetched but no simplified route found.");
+						// Optionally set an error or just show map without route
+					}
+				} catch (err) {
+					console.error("Error fetching trip route:", err);
+					setRouteError("Could not load trip route on map.");
+				} finally {
+					setRouteLoading(false);
+				}
+			};
+			fetchTripRoute();
+		} else {
+			// Clear route if no tripId or if location is pre-filled
+			setTripRouteGeoJson(null);
+		}
+	}, [associatedTripId, locationPreFilled]);
 
 	const handleInputChange = (e) => {
 		const { name, value } = e.target;
@@ -298,16 +354,45 @@ export default function RecommendationForm({
 
 			{/* Location (Lat/Lon Inputs) */}
 			<div>
-				<label className="block text-sm font-medium text-gray-700 mb-2">
+				{/* <label className="block text-sm font-medium text-gray-700 mb-2">
 					Location *
-				</label>
-				{/* Conditionally render Map Picker if location wasn't pre-filled */}
+				</label> */}
+				{/* Conditionally render Map Picker */}
 				{!locationPreFilled && (
-					<div className="mb-4 border p-2">
-						<LocationPicker onLocationSelect={handleLocationSelect} />
-						<p className="text-xs text-gray-500 mt-1 text-center">
-							Click on the map to set the recommendation location.
-						</p>
+					<div className="mb-4 border p-2 relative">
+						{routeLoading && (
+							<div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
+								<p>Loading trip route...</p>
+							</div>
+						)}
+						{routeError && (
+							<p className="text-xs text-red-500 mb-1 text-center">
+								{routeError}
+							</p>
+						)}
+						<div>
+							<LocationPicker
+								onLocationSelect={handleLocationSelect}
+								tripRouteGeoJson={tripRouteGeoJson} // Pass route data
+								// Optionally pass initial center based on route later
+							/>
+						</div>
+
+						{/* <p className="text-xs text-gray-500 mt-1 text-center">
+							Click on the map (near your route) to set the location.
+						</p> */}
+					</div>
+				)}
+				{/* Show Static Map Preview if location IS pre-filled */}
+				{locationPreFilled && (
+					<div className="mb-2 border rounded overflow-hidden h-40">
+						<RecommendationMap
+							latitude={parseFloat(formData.latitude)}
+							longitude={parseFloat(formData.longitude)}
+							popupText={formData.name || "Selected POI Location"}
+							interactive={false} // Make it non-interactive
+							zoomLevel={14} // Slightly more zoomed in
+						/>
 					</div>
 				)}
 				<div className="grid grid-cols-2 gap-4">
@@ -350,11 +435,18 @@ export default function RecommendationForm({
 						/>
 					</div>
 				</div>
+				{locationPreFilled && (
+					<p className="text-xs text-gray-500 mt-1 flex items-center">
+						<FaMapMarkerAlt className="w-3 h-3 mr-1 text-blue-500" />
+						Location pre-filled from Point of Interest. You can adjust if
+						needed.
+					</p>
+				)}
 			</div>
 
-			<p className="text-xs text-gray-500">
+			{/* <p className="text-xs text-gray-500">
 				Enter coordinates manually for now. Map input will be added later.
-			</p>
+			</p> */}
 
 			{/* Rating */}
 			<div>
