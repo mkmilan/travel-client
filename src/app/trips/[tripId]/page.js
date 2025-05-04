@@ -20,6 +20,9 @@ import {
 	FaStar,
 	FaChevronUp,
 	FaPlusCircle,
+	FaLightbulb,
+	FaRegStar,
+	FaCircle,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import {
@@ -34,6 +37,7 @@ import Modal from "@/components/Modal";
 import CommentList from "@/components/comments/CommentList";
 import RecommendationList from "@/components/recommendations/RecommendationList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
+import AddPoiForm from "@/components/pois/AddPoiForm";
 import {
 	Menu,
 	MenuButton,
@@ -109,6 +113,7 @@ export default function TripDetailPage() {
 
 	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 	const [selectedImageUrl, setSelectedImageUrl] = useState("");
+	const [isAddPoiModalOpen, setIsAddPoiModalOpen] = useState(false);
 
 	// Fetch trip data
 	useEffect(() => {
@@ -395,6 +400,17 @@ export default function TripDetailPage() {
 		fetchLikers(); // Fetch likers when modal is opened
 	};
 
+	// Callback function when a new POI is added via the modal
+	const handlePoiAdded = (newPoi) => {
+		// Update the trip state to include the new POI
+		setTrip((prevTrip) => ({
+			...prevTrip,
+			pointsOfInterest: [...(prevTrip.pointsOfInterest || []), newPoi],
+		}));
+		// Close the modal
+		setIsAddPoiModalOpen(false);
+	};
+
 	// --- Render Logic ---
 	if (loading || authLoading) {
 		// Wait for both trip data and auth check
@@ -423,6 +439,20 @@ export default function TripDetailPage() {
 				isLoading={likersLoading}
 				error={likersError}
 			/>
+			{/* --- Add POI Modal --- */}
+			<Modal
+				isOpen={isAddPoiModalOpen}
+				onClose={() => setIsAddPoiModalOpen(false)}
+				title="Add Point of Interest"
+				size="xl" // Adjust size as needed
+			>
+				<AddPoiForm
+					tripId={tripId}
+					tripRouteGeoJson={trip?.simplifiedRoute} // Pass route for context
+					onPoiAdded={handlePoiAdded}
+					onCancel={() => setIsAddPoiModalOpen(false)}
+				/>
+			</Modal>
 			{/* --- Map Modal --- */}
 			<Modal
 				isOpen={isMapModalOpen}
@@ -773,58 +803,85 @@ export default function TripDetailPage() {
 			</div>
 
 			{/* --- Points of Interest Section --- */}
-			{poiCount > 0 && (
-				<div
-					id="pois" // Keep ID here for anchor links
-					className="bg-white shadow-md border border-gray-200 mb-6 scroll-mt-20" // Keep scroll margin
-				>
-					<Disclosure>
-						{({ open }) => (
-							<div>
-								<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
-									<span>Points of Interest ({poiCount})</span>
-									<FaChevronUp
-										className={`${
-											open ? "" : "rotate-180 transform"
-										} h-5 w-5 text-gray-500 transition-transform`}
-									/>
-								</Disclosure.Button>
-								<Transition
-									enter="transition duration-100 ease-out"
-									enterFrom="transform scale-95 opacity-0"
-									enterTo="transform scale-100 opacity-100"
-									leave="transition duration-75 ease-out"
-									leaveFrom="transform scale-100 opacity-100"
-									leaveTo="transform scale-95 opacity-0"
-								>
-									<Disclosure.Panel className="px-4 pb-4 pt-2 text-sm text-gray-500 border-t">
-										{/* Existing POI list logic goes inside the Panel */}
+			{/* {poiCount > 0 && ( */}
+			<div
+				id="pois"
+				className="bg-white shadow-md border border-gray-200 mb-6 scroll-mt-20"
+			>
+				<Disclosure>
+					{({ open }) => (
+						<div>
+							<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
+								<div className="flex items-center">
+									<span>Points of Interest </span>
+									<span className="bg-blue-600 text-white w-7 h-7 ml-2 rounded-full flex items-center justify-center ">
+										{poiCount}
+									</span>
+
+									{/* Add POI Button for Owner */}
+									{isOwner && (
+										<div
+											onClick={(e) => {
+												e.stopPropagation(); // Prevent disclosure toggle
+												setIsAddPoiModalOpen(true);
+											}}
+											title="Add a new Point of Interest to this trip"
+											className="ml-4 p-1 text-indigo-600 hover:text-indigo-800 transition-colors rounded-full hover:bg-indigo-100"
+										>
+											{/* <FaPlusCircle className="w-5 h-5" /> */}
+											{/* <FaRegStar className="w-5 h-5" /> */}
+											<FaPlus className="w-5 h-5 text-gray-500" />
+											{/* <FaLightbulb
+												className="w-5 h-5 "
+												aria-hidden="true"
+											/> */}
+											<span className="sr-only">Add POI</span>
+										</div>
+									)}
+								</div>
+								<FaChevronUp
+									className={`${
+										open ? "" : "rotate-180 transform"
+									} h-5 w-5 text-gray-500 transition-transform`}
+								/>
+							</Disclosure.Button>
+							<Transition
+								enter="transition duration-100 ease-out"
+								enterFrom="transform scale-95 opacity-0"
+								enterTo="transform scale-100 opacity-100"
+								leave="transition duration-75 ease-out"
+								leaveFrom="transform scale-100 opacity-100"
+								leaveTo="transform scale-95 opacity-0"
+							>
+								<Disclosure.Panel className="px-4 pb-4 pt-2 text-sm text-gray-500 border-t">
+									{poiCount > 0 ? (
 										<ul className="space-y-4 mt-4">
-											{" "}
-											{/* Added mt-4 for spacing */}
 											{trip.pointsOfInterest.map((poi, index) => (
 												<li
 													key={poi?._id || poi.timestamp || index}
 													className="border-b pb-3 last:border-b-0 last:pb-0"
 												>
-													<div className="flex items-start space-x-3">
-														<FaMapMarkerAlt className="text-blue-500 mt-1 h-4 w-4 flex-shrink-0" />
-														<div>
-															<p className="font-semibold text-gray-800">
-																{poi.name || `POI ${index + 1}`}
-															</p>
-															{poi.description && (
-																<p className="text-sm text-gray-600 mt-1">
-																	{poi.description}
+													<div className="flex items-start justify-between space-x-3">
+														<div className="flex items-start space-x-2">
+															<FaMapMarkerAlt className="text-blue-500 mt-1 h-4 w-4 flex-shrink-0" />
+															<div>
+																<p className="font-semibold text-gray-800">
+																	{poi.name || `POI ${index + 1}`}
 																</p>
-															)}
-															<p className="text-xs text-gray-500 mt-1">
-																Marked at:{" "}
-																{new Date(poi.timestamp).toLocaleString()} (
-																{poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
-															</p>
+																{poi.description && (
+																	<p className="text-sm text-gray-600 mt-1">
+																		{poi.description}
+																	</p>
+																)}
+																<p className="text-xs text-gray-500 mt-1">
+																	Marked at:{" "}
+																	{new Date(poi.timestamp).toLocaleString()} (
+																	{poi.lat.toFixed(4)}, {poi.lon.toFixed(4)})
+																</p>
+															</div>
 														</div>
-														{loggedInUser && ( // Only show if logged in
+
+														{loggedInUser && ( // Link to create recommendation
 															<Link
 																href={`/recommendations/new?tripId=${tripId}&poiId=${
 																	poi._id
@@ -838,7 +895,7 @@ export default function TripDetailPage() {
 																title="Create recommendation from this POI"
 																className="flex-shrink-0 p-1 text-indigo-600 hover:text-indigo-800 transition-colors"
 															>
-																<FaPlusCircle className="w-5 h-5" />
+																<FaPlus className="w-4 h-4 text-gray-500" />
 																<span className="sr-only">
 																	Create Recommendation
 																</span>
@@ -848,13 +905,18 @@ export default function TripDetailPage() {
 												</li>
 											))}
 										</ul>
-									</Disclosure.Panel>
-								</Transition>
-							</div>
-						)}
-					</Disclosure>
-				</div>
-			)}
+									) : (
+										<p className="mt-4 text-center text-gray-500">
+											No points of interest added yet.
+											{isOwner && " You can add one using the '+' button."}
+										</p>
+									)}
+								</Disclosure.Panel>
+							</Transition>
+						</div>
+					)}
+				</Disclosure>
+			</div>
 
 			{/* --- Recommendations Section (Disclosure) --- */}
 			<div className="bg-white shadow-md border border-gray-200 mb-6">
@@ -862,10 +924,12 @@ export default function TripDetailPage() {
 					{({ open }) => (
 						<div>
 							<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
-								<span>
-									Recommendations (
-									{recommendationsLoading ? "..." : recommendations.length})
-								</span>
+								<div className="flex items-center">
+									<span>Recommendations</span>
+									<span className="bg-blue-600 text-white w-7 h-7 ml-2 rounded-full flex items-center justify-center ">
+										{recommendationsLoading ? "..." : recommendations.length}
+									</span>
+								</div>
 								<FaChevronUp
 									className={`${
 										open ? "" : "rotate-180 transform"
@@ -908,7 +972,13 @@ export default function TripDetailPage() {
 					{({ open }) => (
 						<div>
 							<Disclosure.Button className="flex w-full justify-between items-center p-4 text-left text-lg font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-indigo-500 focus-visible:ring-opacity-75">
-								<span>Comments ({comments?.length || 0})</span>
+								<div className="flex items-center">
+									<span>Comments </span>
+									<span className="bg-blue-600 text-white w-7 h-7 ml-2 rounded-full flex items-center justify-center ">
+										{comments?.length || 0}
+									</span>
+								</div>
+
 								<FaChevronUp
 									className={`${
 										open ? "" : "rotate-180 transform"
