@@ -170,13 +170,24 @@ export function useGpsTracker() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [clearSavedTrack]); // Include clearSavedTrack as it's used
 
-	// --- Timer --- (No changes needed)
 	const startTimer = useCallback(() => {
-		// ... same as before ...
+		// Clear any existing timer *before* starting a new one
+		if (timerIntervalRef.current) {
+			clearInterval(timerIntervalRef.current);
+		}
+		console.log("Starting timer interval.");
+		timerIntervalRef.current = setInterval(() => {
+			// Use functional update to ensure we always get the latest prevTime
+			setElapsedTime((prevTime) => prevTime + 1);
+		}, 1000);
 	}, []);
 
 	const stopTimer = useCallback(() => {
-		// ... same as before ...
+		if (timerIntervalRef.current) {
+			clearInterval(timerIntervalRef.current);
+			timerIntervalRef.current = null;
+			console.log("Stopped timer interval.");
+		}
 	}, []);
 
 	// --- Geolocation Watcher ---
@@ -254,6 +265,7 @@ export function useGpsTracker() {
 				stopTimer();
 				setIsTracking(false); // Stop tracking on error
 				setIsPaused(false);
+				setNeedsSaving(false);
 			},
 			geoOptions
 		);
@@ -261,7 +273,11 @@ export function useGpsTracker() {
 	}, [startTimer, stopTimer, startTime]);
 
 	const stopWatcher = useCallback(() => {
-		// ... same as before ...
+		if (watchIdRef.current !== null) {
+			navigator.geolocation.clearWatch(watchIdRef.current);
+			watchIdRef.current = null;
+			console.log("Stopped watchPosition.");
+		}
 	}, []);
 
 	// --- Tracking Control ---
@@ -273,6 +289,7 @@ export function useGpsTracker() {
 		setIsPaused(false);
 		setStartTime(null); // Ensure start time is reset for a new track
 		setElapsedTime(0); // Ensure elapsed time is reset
+		setNeedsSaving(false);
 
 		// Check permissions before starting watcher
 		if (!navigator.geolocation) {
@@ -311,16 +328,18 @@ export function useGpsTracker() {
 	}, [clearSavedTrack, startWatcher]);
 
 	const pauseTracking = useCallback(async () => {
-		if (!isTracking) return;
+		// Only allow pausing if actively tracking
+		if (!isTracking || isPaused) return;
 
 		stopWatcher();
 		stopTimer();
+		// Set state: no longer tracking, but now paused
 		setIsTracking(false);
 		setIsPaused(true);
-		setNeedsSaving(false);
+		setNeedsSaving(false); // Can't save while paused
 		setTrackingError("");
 
-		// Save current state as paused to DB
+		// Save current state to DB
 		await saveTrackToDB(
 			trackedPoints,
 			elapsedTime,
@@ -331,7 +350,8 @@ export function useGpsTracker() {
 		);
 		console.log("Tracking paused and saved to DB.");
 	}, [
-		isTracking,
+		isTracking, // Check if tracking
+		isPaused, // Check if already paused
 		stopWatcher,
 		stopTimer,
 		trackedPoints,
@@ -343,29 +363,42 @@ export function useGpsTracker() {
 	]);
 
 	const resumeTracking = useCallback(() => {
+		// Only allow resuming if currently paused
 		if (!isPaused) return;
 
 		setTrackingError("");
-		setIsPaused(false); // Set immediately for UI responsiveness
+		// Set state immediately for UI feedback: now tracking, no longer paused
+		setIsTracking(true);
+		setIsPaused(false);
+		setNeedsSaving(false);
+
+		// Attempt to restart the watcher
 		if (startWatcher()) {
 			console.log("Attempting to resume tracking...");
-			// Note: The actual isTracking state will be set by the watcher on first point
+			// Timer will be started by the watcher callback if needed
 		} else {
 			console.error("Failed to restart watcher on resume.");
-			setIsPaused(true); // Revert if watcher failed to start
+			// Revert state if watcher failed to start
+			setIsTracking(false);
+			setIsPaused(true); // Go back to paused state
+			// Error should be set by startWatcher
 		}
 	}, [isPaused, startWatcher]);
 
 	const stopTracking = useCallback(async () => {
+		// Can stop if tracking OR paused
+		if (!isTracking && !isPaused) return;
+
 		stopWatcher();
 		stopTimer();
+		// Set state: no longer tracking, not paused
 		setIsTracking(false);
 		setIsPaused(false);
 
 		if (trackedPoints.length > 1) {
-			setNeedsSaving(true);
+			setNeedsSaving(true); // Mark as ready to save
 			setTrackingError("");
-			// Save final state as 'stopped' to DB
+			// Save final state to DB
 			await saveTrackToDB(
 				trackedPoints,
 				elapsedTime,
@@ -377,10 +410,13 @@ export function useGpsTracker() {
 			console.log("Tracking stopped. Ready to save (saved to DB).");
 		} else {
 			setTrackingError("Not enough points tracked to save.");
+			setNeedsSaving(false); // Not enough points, cannot save
 			await clearSavedTrack(); // Discard insufficient points from DB too
 			console.log("Tracking stopped. Insufficient points, data cleared.");
 		}
 	}, [
+		isTracking, // Need to know current state
+		isPaused, // Need to know current state
 		stopWatcher,
 		stopTimer,
 		trackedPoints,
