@@ -202,14 +202,24 @@ export default function RecommendationForm({
 		// 	onSuccess !== RecommendationForm.defaultProps.onSuccess;
 
 		if (isModal) {
-			// Pass data back via onSuccess callback
 			console.log(
 				"RecommendationForm (Modal Context): Calling onSuccess with data and photos:",
 				formData,
 				photos
 			);
-			onSuccess({ ...formData, photos }); // Pass form data and File objects
-			return; // Stop here, don't submit to API
+			try {
+				// Pass data back via onSuccess callback
+				onSuccess({ ...formData, photos, timestamp: Date.now() }); // Pass form data, File objects, and timestamp
+			} catch (callbackError) {
+				console.error("Error in onSuccess callback:", callbackError);
+				setError("Failed to add recommendation to list.");
+				setIsSubmitting(false); // Reset submitting state on callback error
+				return;
+			}
+			// Reset submitting state *after* successfully calling onSuccess in modal context
+			setIsSubmitting(false);
+			// The parent component (NewTripPage) is responsible for closing the modal via the onSuccess handler
+			return; // Stop here, don't submit to API directly
 		}
 
 		// --- Standalone Context: Proceed with API Submission ---
@@ -306,12 +316,6 @@ export default function RecommendationForm({
 			onSubmit={handleSubmit}
 			className="space-y-6"
 		>
-			{error && (
-				<p className="text-red-600 p-3 bg-red-100 border border-red-400">
-					{error}
-				</p>
-			)}
-
 			{/* Name */}
 			<div>
 				<label
@@ -583,6 +587,11 @@ export default function RecommendationForm({
 			</div>
 
 			{/* Submit Button */}
+			{error && (
+				<p className="text-red-600 p-3 bg-red-100 border border-red-400">
+					{error}
+				</p>
+			)}
 			<div className="pt-4">
 				<button
 					type="submit"
