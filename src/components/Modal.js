@@ -40,7 +40,7 @@ export default function Modal({
 	const panelLayoutClass = isGrowable ? "flex flex-col" : ""; // Use flex layout for growable content
 	const contentAreaClass = isGrowable
 		? "flex-grow overflow-hidden p-0 sm:p-2"
-		: "overflow-y-auto max-h-[70vh] p-5"; // No padding or different padding for map/image
+		: " p-5"; // No padding or different padding for map/image
 
 	return (
 		<Transition
