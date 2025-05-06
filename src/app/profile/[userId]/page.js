@@ -17,6 +17,8 @@ import {
 	FaRoute,
 	FaRulerCombined,
 	FaCalendarAlt,
+	FaImages,
+	FaExpand,
 } from "react-icons/fa";
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
@@ -442,6 +444,32 @@ const PoisModal = ({ isOpen, onClose, userId }) => {
 	);
 };
 
+// --- Photo Gallery Modal ---
+const PhotoViewerModal = ({ isOpen, onClose, photoUrl, photoContext }) => {
+	if (!isOpen || !photoUrl) return null;
+
+	return (
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={photoContext || "View Photo"}
+			size="screen-h" // Use a large size for viewing photos
+			panelClassName="bg-black/80" // Darker background for photo viewing
+		>
+			<div className="relative w-full h-full flex items-center justify-center p-2">
+				<Image
+					src={photoUrl}
+					alt={photoContext || "User photo"}
+					fill // Use fill to make it responsive within the container
+					style={{ objectFit: "contain" }} // Ensures the whole image is visible
+					className="rounded-md"
+					unoptimized // If photos are served directly and not processed by Next.js image optimization
+				/>
+			</div>
+		</Modal>
+	);
+};
+
 export default function ProfilePage() {
 	const params = useParams();
 	const { userId } = params;
@@ -457,6 +485,18 @@ export default function ProfilePage() {
 	const [isRecommendationsModalOpen, setIsRecommendationsModalOpen] =
 		useState(false);
 	const [isPoisModalOpen, setIsPoisModalOpen] = useState(false);
+
+	// --- State for Photo Gallery ---
+	const [userPhotos, setUserPhotos] = useState([]);
+	const [photosLoading, setPhotosLoading] = useState(false);
+	const [photosError, setPhotosError] = useState("");
+	const [photosPage, setPhotosPage] = useState(1);
+	const [photosTotalPages, setPhotosTotalPages] = useState(1);
+	const [photosTotalCount, setPhotosTotalCount] = useState(0);
+	const [isPhotoViewerModalOpen, setIsPhotoViewerModalOpen] = useState(false);
+	const [selectedPhotoUrl, setSelectedPhotoUrl] = useState("");
+	const [selectedPhotoContext, setSelectedPhotoContext] = useState("");
+	const photosLimit = 12; // Match backend or choose a display limit
 
 	const loggedInUser = user;
 
@@ -556,6 +596,55 @@ export default function ProfilePage() {
 		} finally {
 			setFollowLoading(false);
 		}
+	};
+
+	// --- Fetch User Photos ---
+	const fetchUserPhotos = async (pageNum = 1, initialFetch = false) => {
+		if (!userId) return;
+		setPhotosLoading(true);
+		if (initialFetch) {
+			setUserPhotos([]); // Clear for initial fetch or user change
+			setPhotosPage(1);
+			setPhotosTotalPages(1);
+			setPhotosTotalCount(0);
+		}
+		setPhotosError("");
+
+		try {
+			const res = await fetch(
+				`${API_URL}/users/${userId}/photos?page=${pageNum}&limit=${photosLimit}`
+			);
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.message || "Failed to fetch user photos");
+			}
+
+			setUserPhotos((prevPhotos) =>
+				pageNum === 1 ? data.data : [...prevPhotos, ...data.data]
+			);
+			setPhotosPage(data.page);
+			setPhotosTotalPages(data.totalPages);
+			setPhotosTotalCount(data.totalCount);
+		} catch (err) {
+			console.error("Error fetching user photos:", err);
+			setPhotosError(err.message);
+		} finally {
+			setPhotosLoading(false);
+		}
+	};
+
+	// --- useEffect to fetch photos when userId changes or on initial load ---
+	useEffect(() => {
+		if (userId) {
+			fetchUserPhotos(1, true); // Initial fetch for page 1
+		}
+	}, [userId]);
+
+	const handleOpenPhotoViewer = (photoEntry) => {
+		setSelectedPhotoUrl(`${API_URL}/photos/${photoEntry.photoId}`);
+		setSelectedPhotoContext(photoEntry.context || "User Photo");
+		setIsPhotoViewerModalOpen(true);
 	};
 	// --- Render Logic ---
 	if (loading || authLoading) {
@@ -707,7 +796,7 @@ export default function ProfilePage() {
 				</div>
 
 				{/* --- Content Links --- */}
-				<div className="flex justify-center space-x-6 text-gray-700">
+				{/* <div className="flex justify-center space-x-6 text-gray-700">
 					<button
 						onClick={() => setIsRecommendationsModalOpen(true)}
 						className="flex items-center text-blue-600 hover:underline hover:text-blue-800 transition-colors"
@@ -722,9 +811,107 @@ export default function ProfilePage() {
 						<FaMapMarkerAlt className="mr-1.5" />
 						Points of Interest ({profileData.totalPois})
 					</button>
+				</div> */}
+				<div className="mt-6 border-b border-gray-200">
+					<nav
+						className="-mb-px flex space-x-6 justify-center"
+						aria-label="Tabs"
+					>
+						{/* Recommendations Tab/Link */}
+						<button
+							onClick={() => setIsRecommendationsModalOpen(true)}
+							className="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm flex items-center group transition-colors duration-150"
+						>
+							<FaStar className="mr-2 text-yellow-400 group-hover:text-yellow-500 transition-colors duration-150" />
+							Recommendations
+							{profileData.totalRecommendations > 0 && (
+								<span className="ml-2 bg-gray-200 group-hover:bg-blue-100 text-gray-700 group-hover:text-blue-600 text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full transition-colors duration-150">
+									{profileData.totalRecommendations}
+								</span>
+							)}
+						</button>
+
+						{/* POIs Tab/Link */}
+						<button
+							onClick={() => setIsPoisModalOpen(true)}
+							className="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm flex items-center group transition-colors duration-150"
+						>
+							<FaMapMarkerAlt className="mr-2 text-red-400 group-hover:text-red-500 transition-colors duration-150" />
+							Points of Interest
+							{profileData.totalPois > 0 && (
+								<span className="ml-2 bg-gray-200 group-hover:bg-blue-100 text-gray-700 group-hover:text-blue-600 text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full transition-colors duration-150">
+									{profileData.totalPois}
+								</span>
+							)}
+						</button>
+					</nav>
 				</div>
 
-				{/* Removed old Trips section */}
+				{/* --- Photo Gallery Section --- */}
+				{photosTotalCount > 0 && (
+					<section className="mt-8  bg-white shadow ">
+						<h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+							<FaImages className="mr-2  text-blue-500" />
+							Gallery
+						</h2>
+						{photosError && (
+							<p className="text-red-500 text-sm mb-3">{photosError}</p>
+						)}
+						<div className="flex overflow-x-auto space-x-1 pb-3 items-center">
+							{userPhotos.map((photoEntry, index) => (
+								<div
+									key={photoEntry.photoId + "-" + index} // Ensure unique key if photoId could repeat before unique filtering on backend
+									className="flex-shrink-0 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 relative overflow-hidden cursor-pointer group"
+									onClick={() => handleOpenPhotoViewer(photoEntry)}
+								>
+									<Image
+										src={`${API_URL}/photos/${photoEntry.photoId}`}
+										alt={photoEntry.context || "User photo"}
+										fill
+										style={{ objectFit: "cover" }}
+										className="group-hover:opacity-80 transition-opacity"
+										unoptimized // Assuming direct serving, adjust if using Next.js image optimization for these
+										sizes="(max-width: 640px) 128px, (max-width: 768px) 160px, 192px"
+									/>
+									<div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+										<FaExpand className="text-white text-2xl" />
+									</div>
+								</div>
+							))}
+							{!photosLoading && photosPage < photosTotalPages && (
+								<div className="flex-shrink-0 ml-3">
+									<button
+										onClick={() => fetchUserPhotos(photosPage + 1)}
+										className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm  flex items-center justify-center"
+									>
+										Load More
+									</button>
+								</div>
+							)}
+							{photosLoading &&
+								!userPhotos.length && ( // Show spinner only if loading and no photos yet
+									<div className="flex items-center justify-center w-full h-40">
+										<LoadingSpinner />
+									</div>
+								)}
+						</div>
+						{/* {!photosLoading && photosPage < photosTotalPages && (
+							<div className="text-center mt-4">
+								<button
+									onClick={() => fetchUserPhotos(photosPage + 1)}
+									className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm"
+								>
+									Load More Photos
+								</button>
+							</div>
+						)} */}
+						{!photosLoading && userPhotos.length === 0 && !photosError && (
+							<p className="text-gray-500 text-center py-4">
+								No photos to display yet.
+							</p>
+						)}
+					</section>
+				)}
 			</div>
 
 			{/* --- Render Modals --- */}
@@ -749,6 +936,13 @@ export default function ProfilePage() {
 				isOpen={isPoisModalOpen}
 				onClose={() => setIsPoisModalOpen(false)}
 				userId={userId}
+			/>
+
+			<PhotoViewerModal
+				isOpen={isPhotoViewerModalOpen}
+				onClose={() => setIsPhotoViewerModalOpen(false)}
+				photoUrl={selectedPhotoUrl}
+				photoContext={selectedPhotoContext}
 			/>
 		</>
 	);
