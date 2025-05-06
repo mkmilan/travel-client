@@ -849,8 +849,8 @@ export default function ProfilePage() {
 
 				{/* --- Photo Gallery Section --- */}
 				{photosTotalCount > 0 && (
-					<section className="mt-8  bg-white shadow ">
-						<h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+					<section className="mt-6  bg-white shadow ">
+						<h2 className="pl-2 pt-2 text-xl font-semibold text-gray-800 mb-4 flex items-center">
 							<FaImages className="mr-2  text-blue-500" />
 							Gallery
 						</h2>

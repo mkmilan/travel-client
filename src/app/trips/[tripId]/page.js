@@ -777,7 +777,7 @@ export default function TripDetailPage() {
 						<FaImages className="mr-2 text-blue-500" />
 						Photo Gallery
 					</h2>
-					<div className="flex overflow-x-auto  pb-2 items-center">
+					<div className="flex overflow-x-auto space-x-1 pb-2 items-center">
 						{trip.photos.map((photoId) => {
 							const imageUrl = `${API_URL}/photos/${photoId}`;
 							return (
