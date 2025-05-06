@@ -23,6 +23,8 @@ import {
 	FaLightbulb,
 	FaRegStar,
 	FaCircle,
+	FaImages,
+	FaExpand,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import {
@@ -768,39 +770,44 @@ export default function TripDetailPage() {
 				</a>
 			</div>
 
-			{/* --- Photos Section --- */}
-			<div className="bg-white   shadow-md border border-gray-200 mb-6">
-				{trip.photos && trip.photos.length > 0 && (
-					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
+			{/* --- Photos Section (Updated) --- */}
+			{trip.photos && trip.photos.length > 0 && (
+				<div className="bg-white shadow-md border border-gray-200 mb-6 pt-2 ">
+					<h2 className="text-lg font-semibold text-gray-800 mb-3 pl-4 flex items-center">
+						<FaImages className="mr-2 text-blue-500" />
+						Photo Gallery
+					</h2>
+					<div className="flex overflow-x-auto  pb-2 items-center">
 						{trip.photos.map((photoId) => {
 							const imageUrl = `${API_URL}/photos/${photoId}`;
 							return (
 								<div
 									key={photoId}
-									className="aspect-square overflow-hidden shadow cursor-pointer group"
+									className="flex-shrink-0 w-48 h-48 sm:w-56 sm:h-56 relative  overflow-hidden cursor-pointer group" //sm:w-58 sm:h-58
 									onClick={() => {
 										setSelectedImageUrl(imageUrl);
 										setIsImageModalOpen(true);
 									}}
 								>
 									<Image
-										// Construct URL to the photo serving endpoint
-										// src={`${API_URL}/photos/${photoId}`}
 										src={imageUrl}
 										alt={`Trip photo ${photoId}`}
-										width={300} // Provide initial width hint
-										height={300} // Provide initial height hint
-										className="object-cover w-full h-full hover:scale-105 transition-transform duration-200"
+										fill
+										style={{ objectFit: "cover" }}
+										className="group-hover:opacity-80 transition-opacity"
+										sizes="(max-width: 640px) 192px, 232px" // Adjust sizes based on w-40/w-48 160px, 192px
 										// Add unoptimized if serving directly without Next.js optimization layer
 										// unoptimized
 									/>
-									{/* TODO: Add delete button for owner later */}
+									<div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+										<FaExpand className="text-white text-2xl" />
+									</div>
 								</div>
 							);
 						})}
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 
 			{/* --- Points of Interest Section --- */}
 			{/* {poiCount > 0 && ( */}

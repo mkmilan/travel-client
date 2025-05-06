@@ -45,7 +45,7 @@ export default function CommentList({
 				return (
 					<div
 						key={comment._id}
-						className="flex items-start space-x-3"
+						className="flex items-start mb-3"
 					>
 						<Link
 							href={`/profile/${comment.user._id}`}

@@ -31,47 +31,48 @@ export default function RecommendationCard({ recommendation }) {
 		recommendation;
 
 	return (
-		<div className="border-b border-gray-200 py-4 last:border-b-0">
-			<div className="flex justify-between items-start mb-2">
-				{/* Link the name to the detail page */}
-				<Link
+		<div className="border-b border-gray-200 py-4 last:border-b-0 ">
+			<Link
+				href={`/recommendations/${_id}`}
+				className=" "
+			>
+				<div className="flex justify-between items-start mb-2">
+					{/* Link the name to the detail page */}
+					{/* <Link
 					href={`/recommendations/${_id}`}
 					className="hover:text-indigo-600"
-				>
+				> */}
 					<h3 className="text-md font-semibold text-gray-800">{name}</h3>
-				</Link>
-				<StaticStarRating rating={rating} />
-			</div>
+					{/* </Link> */}
+					<StaticStarRating rating={rating} />
+				</div>
 
-			<div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
-				<span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">
-					{getRecommendationCategoryLabel(primaryCategory)}
-				</span>
-				<span>·</span>
-				<Link
+				<div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
+					<span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">
+						{getRecommendationCategoryLabel(primaryCategory)}
+					</span>
+					<span>·</span>
+					{/* <Link
 					href={`/profile/${user._id}`}
 					className="flex items-center hover:underline"
-				>
+				> */}
 					<ProfilePicture
 						size={20}
 						profilePictureUrl={user.profilePictureUrl}
 						className="mr-1"
 					/>
 					<span>{user.username}</span>
-				</Link>
-			</div>
+					{/* </Link> */}
+				</div>
 
-			<p className="text-sm text-gray-600 line-clamp-2 mb-1">
-				{" "}
-				{/* Reduced line clamp */}
-				{description}
-			</p>
-			{/* Add link to view full recommendation */}
-			<Link
-				href={`/recommendations/${_id}`}
-				className="text-sm text-indigo-600 hover:underline mt-1 inline-block"
-			>
-				View Details
+				<p className="text-sm text-gray-600 line-clamp-2 mb-1">
+					{" "}
+					{/* Reduced line clamp */}
+					{description}
+				</p>
+				{/* Add link to view full recommendation */}
+
+				{/* View Details */}
 			</Link>
 		</div>
 	);
