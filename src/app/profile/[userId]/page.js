@@ -445,21 +445,60 @@ const PoisModal = ({ isOpen, onClose, userId }) => {
 };
 
 // --- Photo Gallery Modal ---
-const PhotoViewerModal = ({ isOpen, onClose, photoUrl, photoContext }) => {
-	if (!isOpen || !photoUrl) return null;
+const PhotoViewerModal = ({
+	isOpen,
+	onClose,
+	// photoUrl,
+	// photoContext,
+
+	entry,
+}) => {
+	console.log("PhotoViewerModal rendered - entry:", entry);
+	// if (!isOpen || !photoUrl) return null;
+	if (!isOpen || !entry) return null;
+
+	const photoUrl = `${API_URL}/photos/${entry.photoId}`;
+	const photoContextText = entry.context || "View Photo";
+
+	let titleContent;
+
+	if (entry.sourceType === "trip" && entry.sourceId) {
+		titleContent = (
+			<Link
+				href={`/trips/${entry.sourceId}`}
+				className="hover:bg-gray-100 p-2"
+				onClick={onClose} // Optional: close modal when link is clicked
+			>
+				{photoContextText}
+			</Link>
+		);
+	} else if (entry.sourceType === "recommendation" && entry.sourceId) {
+		// Ensure you have a route like /recommendations/[id] for this to work
+		titleContent = (
+			<Link
+				href={`/recommendations/${entry.sourceId}`} // Adjust if your route is different
+				className="hover:hover:bg-gray-200 p-2 "
+				onClick={onClose} // Optional: close modal when link is clicked
+			>
+				{photoContextText}
+			</Link>
+		);
+	} else {
+		titleContent = photoContextText;
+	}
 
 	return (
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={photoContext || "View Photo"}
+			title={titleContent}
 			size="screen-h" // Use a large size for viewing photos
 			panelClassName="bg-black/80" // Darker background for photo viewing
 		>
 			<div className="relative w-full h-full flex items-center justify-center p-2">
 				<Image
 					src={photoUrl}
-					alt={photoContext || "User photo"}
+					alt={entry.context || "User photo"}
 					fill // Use fill to make it responsive within the container
 					style={{ objectFit: "contain" }} // Ensures the whole image is visible
 					className="rounded-md"
@@ -496,6 +535,7 @@ export default function ProfilePage() {
 	const [isPhotoViewerModalOpen, setIsPhotoViewerModalOpen] = useState(false);
 	const [selectedPhotoUrl, setSelectedPhotoUrl] = useState("");
 	const [selectedPhotoContext, setSelectedPhotoContext] = useState("");
+	const [selectedPhotoEntry, setSelectedPhotoEntry] = useState(null);
 	const photosLimit = 12; // Match backend or choose a display limit
 
 	const loggedInUser = user;
@@ -642,8 +682,9 @@ export default function ProfilePage() {
 	}, [userId]);
 
 	const handleOpenPhotoViewer = (photoEntry) => {
-		setSelectedPhotoUrl(`${API_URL}/photos/${photoEntry.photoId}`);
-		setSelectedPhotoContext(photoEntry.context || "User Photo");
+		// setSelectedPhotoUrl(`${API_URL}/photos/${photoEntry.photoId}`);
+		// setSelectedPhotoContext(photoEntry.context || "User Photo");
+		setSelectedPhotoEntry(photoEntry);
 		setIsPhotoViewerModalOpen(true);
 	};
 	// --- Render Logic ---
@@ -820,7 +861,7 @@ export default function ProfilePage() {
 						{/* Recommendations Tab/Link */}
 						<button
 							onClick={() => setIsRecommendationsModalOpen(true)}
-							className="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm flex items-center group transition-colors duration-150"
+							className="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm flex items-center group transition-colors duration-150 cursor-pointer"
 						>
 							<FaStar className="mr-2 text-yellow-400 group-hover:text-yellow-500 transition-colors duration-150" />
 							Recommendations
@@ -834,7 +875,7 @@ export default function ProfilePage() {
 						{/* POIs Tab/Link */}
 						<button
 							onClick={() => setIsPoisModalOpen(true)}
-							className="whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm flex items-center group transition-colors duration-150"
+							className="cursor-pointer whitespace-nowrap pb-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm flex items-center group transition-colors duration-150"
 						>
 							<FaMapMarkerAlt className="mr-2 text-red-400 group-hover:text-red-500 transition-colors duration-150" />
 							Points of Interest
@@ -939,10 +980,16 @@ export default function ProfilePage() {
 			/>
 
 			<PhotoViewerModal
+				// isOpen={isPhotoViewerModalOpen}
+				// onClose={() => setIsPhotoViewerModalOpen(false)}
+				// photoUrl={selectedPhotoUrl}
+				// photoContext={selectedPhotoContext}
 				isOpen={isPhotoViewerModalOpen}
-				onClose={() => setIsPhotoViewerModalOpen(false)}
-				photoUrl={selectedPhotoUrl}
-				photoContext={selectedPhotoContext}
+				onClose={() => {
+					setIsPhotoViewerModalOpen(false);
+					setSelectedPhotoEntry(null); // Clear the entry on close
+				}}
+				entry={selectedPhotoEntry}
 			/>
 		</>
 	);

@@ -117,7 +117,7 @@ export default function Navbar() {
 										<ProfilePicture
 											src={user.profilePictureUrl}
 											alt="Profile"
-											size={20} // Adjust size as needed
+											size={25} // Adjust size as needed
 											className="rounded-full border border-gray-300"
 										/>
 									) : (
