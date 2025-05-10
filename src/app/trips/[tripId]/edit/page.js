@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Listbox, Transition } from "@headlessui/react";
 import {
 	FaUpload,
+	FaBus,
 	FaTrash,
 	FaGlobe,
 	FaUserFriends,
@@ -65,12 +66,12 @@ const visibilityOptions = [
 ];
 
 const travelModeOptions = [
-	{ id: "motorhome", name: "Motorhome", icon: FaCar },
+	{ id: "motorhome", name: "Motorhome", icon: FaBus },
 	{ id: "campervan", name: "Campervan", icon: FaCaravan },
 	{ id: "car", name: "Car", icon: FaCar },
 	{ id: "motorcycle", name: "Motorcycle", icon: FaMotorcycle },
 	{ id: "bicycle", name: "Bicycle", icon: FaBicycle },
-	{ id: "walk", name: "Walk/Hike", icon: FaWalking },
+	{ id: "walking", name: "Walk/Hike", icon: FaWalking },
 ];
 
 export default function EditTripPage() {
