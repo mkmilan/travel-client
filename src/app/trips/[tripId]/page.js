@@ -32,6 +32,10 @@ import {
 	formatDistance,
 	formatSpeed,
 } from "@/utils/formatters";
+import {
+	getTravelModeIcon,
+	getTravelModeName,
+} from "@/utils/getTravelModeIcon";
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
 import LikersModal from "@/components/trips/LikersModal";
@@ -429,6 +433,14 @@ export default function TripDetailPage() {
 	// console.log("profilePictureUrl", profilePictureUrl);
 	console.log("TripCard trip:", trip);
 	const poiCount = trip.pointsOfInterest?.length || 0;
+	const TravelModeIcon =
+		trip?.defaultTravelMode !== undefined
+			? getTravelModeIcon(trip.defaultTravelMode)
+			: null;
+	const travelModeName =
+		trip?.defaultTravelMode !== undefined
+			? getTravelModeName(trip.defaultTravelMode)
+			: "N/A";
 
 	return (
 		// Remove p-4 to allow cards to touch edges on mobile
@@ -497,11 +509,11 @@ export default function TripDetailPage() {
 					</div>
 				)}
 			</Modal>
-			{/* Card already has internal padding: p-4 */}
+
 			<div className="bg-white p-4 shadow-md border border-gray-200 mb-6">
 				<div className="flex flex-row justify-between items-start sm:items-center mb-4">
 					<div>
-						<h1 className="text-xl text-center font-bold text-gray-900 mb-1">
+						<h1 className="text-xl  font-bold text-gray-900 mb-1">
 							{trip.title}
 						</h1>
 						<div className="flex items-center text-sm text-gray-600">
@@ -659,6 +671,14 @@ export default function TripDetailPage() {
 						<p className="font-medium text-gray-800">
 							{formatDistance(trip.distanceMeters)}
 						</p>
+					</div>
+					{/* --- Add Travel Mode --- */}
+					<div>
+						<p className="text-xs text-gray-500  pb-1">Travel Mode</p>
+						<div className="flex items-center justify-center font-medium text-gray-800">
+							{TravelModeIcon && <TravelModeIcon className="mr-1.5 h-4 w-4" />}
+							{/* <span>{travelModeName}</span> */}
+						</div>
 					</div>
 					{/* --- Add Average Speed --- */}
 					<div>

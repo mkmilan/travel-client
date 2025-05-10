@@ -6,6 +6,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { formatDistance, formatDuration } from "@/utils/formatters";
+import {
+	getTravelModeIcon,
+	getTravelModeName,
+} from "@/utils/getTravelModeIcon";
 
 // Import icons (choose appropriate ones)
 import {
@@ -36,10 +40,19 @@ export default function TripCard({ trip }) {
 	const [likeError, setLikeError] = useState("");
 
 	if (!trip) return null;
-	// console.log("TripCard trip:", trip);
+	// console.log("TripCard trip:------", trip);
 
 	const durationStr = formatDuration(trip.durationMillis);
 	const distanceStr = formatDistance(trip.distanceMeters);
+	const TravelModeIcon =
+		trip?.defaultTravelMode !== undefined
+			? getTravelModeIcon(trip.defaultTravelMode)
+			: null;
+	const travelModeName =
+		trip?.defaultTravelMode !== undefined
+			? getTravelModeName(trip.defaultTravelMode)
+			: "";
+	// console.log("TripCard travelModeName:", travelModeName);
 
 	const handleLikeToggle = async (e) => {
 		e.preventDefault(); // Prevent link navigation when clicking the button
@@ -126,6 +139,14 @@ export default function TripCard({ trip }) {
 						</p>
 					</div>
 					<div className="flex items-center space-x-3 text-sm text-gray-600 mt-1 sm:mt-0 whitespace-nowrap">
+						{TravelModeIcon && (
+							<span
+								className="flex items-center  text-gray-600"
+								title={travelModeName}
+							>
+								<TravelModeIcon className="mr-1" />
+							</span>
+						)}
 						{durationStr !== "N/A" && (
 							<span className="flex items-center">
 								<FaClock className="mr-1" /> {durationStr}

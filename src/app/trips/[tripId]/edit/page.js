@@ -1,11 +1,32 @@
 // src/app/trips/[tripId]/edit/page.jsx
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+	useState,
+	useEffect,
+	useCallback,
+	useRef,
+	Fragment,
+} from "react";
 import { useParams, useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
-import { FaUpload, FaTrash } from "react-icons/fa";
+import { Listbox, Transition } from "@headlessui/react";
+import {
+	FaUpload,
+	FaTrash,
+	FaGlobe,
+	FaUserFriends,
+	FaLock,
+	// FaRv,
+	FaCar,
+	FaBicycle,
+	FaWalking,
+	FaCaravan,
+	FaMotorcycle,
+	FaQuestionCircle, // For 'other'
+	FaChevronDown,
+} from "react-icons/fa";
 import Image from "next/image";
 import { API_URL } from "@/utils/config";
 
@@ -22,6 +43,36 @@ const ErrorComponent = ({ message }) => (
 	</div>
 );
 
+const visibilityOptions = [
+	{
+		id: "public",
+		name: "Public",
+		icon: FaGlobe,
+		description: "Visible to everyone.",
+	},
+	{
+		id: "followers_only", // Corrected: was "followers"
+		name: "Followers",
+		icon: FaUserFriends,
+		description: "Visible only to your followers.",
+	},
+	{
+		id: "private",
+		name: "Private",
+		icon: FaLock,
+		description: "Visible only to you.",
+	},
+];
+
+const travelModeOptions = [
+	{ id: "motorhome", name: "Motorhome", icon: FaCar },
+	{ id: "campervan", name: "Campervan", icon: FaCaravan },
+	{ id: "car", name: "Car", icon: FaCar },
+	{ id: "motorcycle", name: "Motorcycle", icon: FaMotorcycle },
+	{ id: "bicycle", name: "Bicycle", icon: FaBicycle },
+	{ id: "walk", name: "Walk/Hike", icon: FaWalking },
+];
+
 export default function EditTripPage() {
 	const params = useParams();
 	const router = useRouter();
@@ -33,6 +84,8 @@ export default function EditTripPage() {
 	const [description, setDescription] = useState("");
 	const [startLocationName, setStartLocationName] = useState("");
 	const [endLocationName, setEndLocationName] = useState("");
+	const [visibility, setVisibility] = useState(visibilityOptions[0]);
+	const [travelMode, setTravelMode] = useState(travelModeOptions[0]);
 
 	// Photo State
 	const [existingPhotos, setExistingPhotos] = useState([]);
@@ -79,6 +132,17 @@ export default function EditTripPage() {
 			setStartLocationName(data.startLocationName || "");
 			setEndLocationName(data.endLocationName || "");
 			setExistingPhotos(data.photos || []);
+
+			const currentVisibility =
+				visibilityOptions.find(
+					(opt) => opt.id === data.defaultTripVisibility
+				) || visibilityOptions[0];
+			setVisibility(currentVisibility);
+
+			const currentTravelMode =
+				travelModeOptions.find((opt) => opt.id === data.defaultTravelMode) ||
+				travelModeOptions[0];
+			setTravelMode(currentTravelMode);
 		} catch (err) {
 			console.error("Error fetching trip for edit:", err);
 			setError(err.message || "Could not load trip data.");
@@ -252,6 +316,8 @@ export default function EditTripPage() {
 					description: description.trim(),
 					startLocationName: startLocationName.trim(),
 					endLocationName: endLocationName.trim(),
+					defaultTripVisibility: visibility.id,
+					defaultTravelMode: travelMode.id,
 				}),
 			});
 			const updatedTripData = await res.json();
@@ -281,8 +347,158 @@ export default function EditTripPage() {
 		<ProtectedRoute>
 			{/* Remove p-4 md:p-0 to allow cards to touch edges on mobile */}
 			<div className="max-w-4xl mx-auto space-y-8">
+				<div className="bg-white p-4 sm:p-6 md:p-8 shadow-md border border-gray-200 flex space-y-4 space-x-4 md:flex-row justify-between md:justify-start">
+					{/* Visibility Selector */}
+					<div className="md:col-span-2 ">
+						{" "}
+						{/* Make it full width on medium screens if desired, or keep it in the grid flow */}
+						<Listbox
+							value={visibility}
+							onChange={setVisibility}
+						>
+							<Listbox.Label className="block text-sm font-medium text-gray-700 mb-1">
+								Trip Visibility
+							</Listbox.Label>
+							<div className="relative mt-1">
+								<Listbox.Button className="relative w-full cursor-default  bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+									<span className="flex items-center">
+										<visibility.icon
+											className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0"
+											aria-hidden="true"
+										/>
+										<span className="block truncate">{visibility.name}</span>
+									</span>
+									<span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+										<FaChevronDown
+											className="h-5 w-5 text-gray-400"
+											aria-hidden="true"
+										/>
+									</span>
+								</Listbox.Button>
+								<Transition
+									as={Fragment}
+									leave="transition ease-in duration-100"
+									leaveFrom="opacity-100"
+									leaveTo="opacity-0"
+								>
+									<Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto  bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+										{visibilityOptions.map((option) => (
+											<Listbox.Option
+												key={option.id}
+												className={({ active }) =>
+													`relative cursor-default select-none py-2 pl-10 pr-4 ${
+														active
+															? "bg-indigo-100 text-indigo-900"
+															: "text-gray-900"
+													}`
+												}
+												value={option}
+											>
+												{({ selected }) => (
+													<>
+														<span
+															className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+																selected ? "text-indigo-600" : "text-gray-400"
+															}`}
+														>
+															<option.icon
+																className="h-5 w-5"
+																aria-hidden="true"
+															/>
+														</span>
+														<span
+															className={`block truncate ${
+																selected ? "font-semibold" : "font-normal"
+															}`}
+														>
+															{option.name}
+														</span>
+													</>
+												)}
+											</Listbox.Option>
+										))}
+									</Listbox.Options>
+								</Transition>
+							</div>
+						</Listbox>
+					</div>
+
+					{/* Travel Mode Selector */}
+					<div className="md:col-span-2">
+						{" "}
+						{/* Make it full width on medium screens if desired */}
+						<Listbox
+							value={travelMode}
+							onChange={setTravelMode}
+						>
+							<Listbox.Label className="block text-sm font-medium text-gray-700 mb-1">
+								Primary Travel Mode
+							</Listbox.Label>
+							<div className="relative mt-1">
+								<Listbox.Button className="relative w-full cursor-default  bg-white py-2 pl-3 pr-10 text-left shadow-sm border border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+									<span className="flex items-center">
+										<travelMode.icon
+											className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0"
+											aria-hidden="true"
+										/>
+										<span className="block truncate">{travelMode.name}</span>
+									</span>
+									<span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+										<FaChevronDown
+											className="h-5 w-5 text-gray-400"
+											aria-hidden="true"
+										/>
+									</span>
+								</Listbox.Button>
+								<Transition
+									as={Fragment}
+									leave="transition ease-in duration-100"
+									leaveFrom="opacity-100"
+									leaveTo="opacity-0"
+								>
+									<Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto  bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+										{travelModeOptions.map((option) => (
+											<Listbox.Option
+												key={option.id}
+												className={({ active }) =>
+													`relative cursor-default select-none py-2 pl-10 pr-4 ${
+														active
+															? "bg-indigo-100 text-indigo-900"
+															: "text-gray-900"
+													}`
+												}
+												value={option}
+											>
+												{({ selected }) => (
+													<>
+														<span
+															className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+																selected ? "text-indigo-600" : "text-gray-400"
+															}`}
+														>
+															<option.icon
+																className="h-5 w-5"
+																aria-hidden="true"
+															/>
+														</span>
+														<span
+															className={`block truncate ${
+																selected ? "font-semibold" : "font-normal"
+															}`}
+														>
+															{option.name}
+														</span>
+													</>
+												)}
+											</Listbox.Option>
+										))}
+									</Listbox.Options>
+								</Transition>
+							</div>
+						</Listbox>
+					</div>
+				</div>
 				{/* --- Manage Photos Section --- */}
-				{/* Card already has internal padding: p-4 sm:p-6 md:p-8 */}
 				<div className="bg-white p-4 sm:p-6 md:p-8 shadow-md border border-gray-200">
 					<h2 className="text-xl font-semibold text-gray-800 mb-4">
 						Manage Photos
@@ -292,11 +508,11 @@ export default function EditTripPage() {
 					)}
 
 					{/* Existing Photos Display */}
-					<h3 className="text-lg font-medium text-gray-700 mb-3">
+					{/* <h3 className="text-lg font-medium text-gray-700 mb-3">
 						Existing Photos ({existingPhotos.length} / 5)
-					</h3>
+					</h3> */}
 					{existingPhotos.length > 0 ? (
-						<div className="flex space-x-3 overflow-x-auto pb-4 mb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+						<div className="flex space-x-1 overflow-x-auto pb-4 mb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
 							{existingPhotos.map((photoId) => (
 								<div
 									key={photoId}
@@ -306,7 +522,7 @@ export default function EditTripPage() {
 									<img
 										src={`${API_URL}/photos/${photoId}`} // Construct full URL
 										alt={`Existing trip photo`}
-										className="object-cover w-full h-full rounded-md"
+										className="object-cover w-full h-full "
 										loading="lazy" // Lazy load images
 									/>
 									<button
@@ -437,7 +653,7 @@ export default function EditTripPage() {
 								htmlFor="title"
 								className="block text-sm font-medium text-gray-700 mb-1"
 							>
-								Title <span className="text-red-500">*</span>
+								Title
 							</label>
 							<input
 								type="text"
@@ -446,7 +662,7 @@ export default function EditTripPage() {
 								onChange={(e) => setTitle(e.target.value)}
 								required
 								maxLength={100}
-								className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								className="block w-full px-3 py-2 border border-gray-300  shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 							/>
 						</div>
 						{/* Description */}
@@ -464,7 +680,7 @@ export default function EditTripPage() {
 								rows={4}
 								maxLength={2000}
 								placeholder="Update notes about your journey..."
-								className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								className="block w-full px-3 py-2 border border-gray-300  shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 							/>
 						</div>
 						{/* Start/End Location */}
@@ -483,7 +699,7 @@ export default function EditTripPage() {
 									onChange={(e) => setStartLocationName(e.target.value)}
 									maxLength={100}
 									placeholder="City, State/Region"
-									className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									className="block w-full px-3 py-2 border border-gray-300  shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 								/>
 							</div>
 							<div>
@@ -500,7 +716,7 @@ export default function EditTripPage() {
 									onChange={(e) => setEndLocationName(e.target.value)}
 									maxLength={100}
 									placeholder="City, State/Region"
-									className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+									className="block w-full px-3 py-2 border border-gray-300  shadow-sm placeholder-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 								/>
 							</div>
 						</div>
