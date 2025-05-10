@@ -19,6 +19,7 @@ import {
 	FaCalendarAlt,
 	FaImages,
 	FaExpand,
+	FaCog,
 } from "react-icons/fa";
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
@@ -736,12 +737,20 @@ export default function ProfilePage() {
 						{/* Action Buttons */}
 						<div className="space-x-3 flex items-center justify-center md:justify-start">
 							{isOwnProfile ? (
-								<Link
-									href={`/profile/${userId}/edit`}
-									className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm no-underline" // Removed rounded
-								>
-									<FaUserEdit className="mr-2" /> Edit Profile
-								</Link>
+								<>
+									<Link
+										href={`/profile/${userId}/edit`}
+										className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm no-underline" // Removed rounded
+									>
+										<FaUserEdit className="mr-2" /> Edit Profile
+									</Link>
+									<Link
+										href={`/settings`} // Link to the new settings page
+										className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 text-sm no-underline"
+									>
+										<FaCog className="mr-2" /> Settings
+									</Link>
+								</>
 							) : loggedInUser ? (
 								<>
 									{!isFollowing && (

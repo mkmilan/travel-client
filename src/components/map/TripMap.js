@@ -165,20 +165,22 @@ export default function TripMap({
 					position={[poi.lat, poi.lon]}
 					icon={poiIcon} // Use custom icon
 				>
-					<Popup>
-						<div className="text-sm">
-							<p className="font-semibold mb-1">
-								{poi.name ||
-									`POI @ ${new Date(poi.timestamp).toLocaleTimeString()}`}
-							</p>
-							{poi.description && (
-								<p className="text-gray-600 mb-1">{poi.description}</p>
-							)}
-							<p className="text-xs text-gray-500">
-								{poi.lat.toFixed(5)}, {poi.lon.toFixed(5)}
-							</p>
-						</div>
-					</Popup>
+					{interactive && ( // Only render Popup if map is interactive
+						<Popup>
+							<div className="text-sm">
+								<p className="font-semibold mb-1">
+									{poi.name ||
+										`POI @ ${new Date(poi.timestamp).toLocaleTimeString()}`}
+								</p>
+								{poi.description && (
+									<p className="text-gray-600 mb-1">{poi.description}</p>
+								)}
+								<p className="text-xs text-gray-500">
+									{poi.lat.toFixed(5)}, {poi.lon.toFixed(5)}
+								</p>
+							</div>
+						</Popup>
+					)}
 				</Marker>
 			))}
 

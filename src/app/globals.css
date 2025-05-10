@@ -18,6 +18,10 @@
     --foreground: #ededed;
   }
 } */
+html.dark {
+  --background: #171717; 
+  --foreground: #ededed; 
+}
 
 body {
   background: var(--background);
