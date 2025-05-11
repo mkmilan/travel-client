@@ -128,8 +128,10 @@ export default function TripDetailPage() {
 				setLoading(true);
 				setError("");
 				try {
+					// Add Authorization header if token exists
+					const headers = token ? { Authorization: `Bearer ${token}` } : {};
 					// Use relative URL if proxying is set up, else full URL
-					const res = await fetch(`${API_URL}/trips/${tripId}`);
+					const res = await fetch(`${API_URL}/trips/${tripId}`, { headers });
 					const data = await res.json();
 
 					if (!res.ok) {

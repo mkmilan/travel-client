@@ -52,6 +52,8 @@ export default function TripCard({ trip }) {
 		trip?.defaultTravelMode !== undefined
 			? getTravelModeName(trip.defaultTravelMode)
 			: "";
+
+	const tripVisibility = trip?.defaultTripVisibility || "public";
 	// console.log("TripCard travelModeName:", travelModeName);
 
 	const handleLikeToggle = async (e) => {
@@ -181,7 +183,17 @@ export default function TripCard({ trip }) {
 				<div className="text-xs text-gray-500">
 					{/* Placeholders */}
 					{/* <span>Avg Speed: N/A</span> | <span>Max Speed: N/A</span> | <span>Elevation: N/A</span> */}
+					<div className=" text-xs ">
+						{tripVisibility === "public" ? (
+							<span className=" text-xs font-medium">Public</span>
+						) : tripVisibility === "followers_only" ? (
+							<span className=" text-xs font-medium">Followers Only</span>
+						) : (
+							<span className=" text-xs font-medium">Private</span>
+						)}
+					</div>
 				</div>
+
 				<div className="flex items-center space-x-4 text-sm text-gray-600">
 					<button
 						onClick={handleLikeToggle}
