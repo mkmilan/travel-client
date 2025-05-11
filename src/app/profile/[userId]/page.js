@@ -540,6 +540,7 @@ export default function ProfilePage() {
 	const photosLimit = 12; // Match backend or choose a display limit
 
 	const loggedInUser = user;
+	const preferredUnits = loggedInUser?.settings?.preferredUnits || "metric";
 
 	useEffect(() => {
 		// Fetch profile data when userId is available
@@ -809,7 +810,7 @@ export default function ProfilePage() {
 							Distance
 						</div>
 						<div className="text-xl font-semibold text-gray-800">
-							{formatDistance(profileData.totalDistance)}
+							{formatDistance(profileData.totalDistance, preferredUnits)}
 						</div>
 					</div>
 					<div>

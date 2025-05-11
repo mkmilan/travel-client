@@ -38,12 +38,13 @@ export default function TripCard({ trip }) {
 	const [isLikedByMe, setIsLikedByMe] = useState(false); // We need a way to determine initial state
 	const [likeInProgress, setLikeInProgress] = useState(false);
 	const [likeError, setLikeError] = useState("");
+	const preferredUnits = loggedInUser?.settings?.preferredUnits || "metric";
 
 	if (!trip) return null;
 	// console.log("TripCard trip:------", trip);
 
 	const durationStr = formatDuration(trip.durationMillis);
-	const distanceStr = formatDistance(trip.distanceMeters);
+	const distanceStr = formatDistance(trip.distanceMeters, preferredUnits);
 	const TravelModeIcon =
 		trip?.defaultTravelMode !== undefined
 			? getTravelModeIcon(trip.defaultTravelMode)

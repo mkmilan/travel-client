@@ -90,6 +90,7 @@ export default function TripDetailPage() {
 	const router = useRouter();
 	const { tripId } = params;
 	const { user: loggedInUser, token, loading: authLoading } = useAuth();
+	const preferredUnits = loggedInUser?.settings?.preferredUnits || "metric";
 
 	const [trip, setTrip] = useState(null);
 	const [comments, setComments] = useState([]);
@@ -671,7 +672,7 @@ export default function TripDetailPage() {
 					<div>
 						<p className="text-xs text-gray-500 ">Distance</p>
 						<p className="font-medium text-gray-800">
-							{formatDistance(trip.distanceMeters)}
+							{formatDistance(trip.distanceMeters, preferredUnits)}
 						</p>
 					</div>
 					{/* --- Add Travel Mode --- */}
@@ -686,7 +687,11 @@ export default function TripDetailPage() {
 					<div>
 						<p className="text-xs text-gray-500 ">Avg Speed</p>
 						<p className="font-medium text-gray-800">
-							{formatSpeed(trip.distanceMeters, trip.durationMillis)}
+							{formatSpeed(
+								trip.distanceMeters,
+								trip.durationMillis,
+								preferredUnits
+							)}
 						</p>
 					</div>
 					{/* --- Add POI Count --- */}
@@ -857,13 +862,8 @@ export default function TripDetailPage() {
 											title="Add a new Point of Interest to this trip"
 											className="ml-4 p-1 text-indigo-600 hover:text-indigo-800 transition-colors rounded-full hover:bg-indigo-100"
 										>
-											{/* <FaPlusCircle className="w-5 h-5" /> */}
-											{/* <FaRegStar className="w-5 h-5" /> */}
 											<FaPlus className="w-5 h-5 text-gray-500" />
-											{/* <FaLightbulb
-												className="w-5 h-5 "
-												aria-hidden="true"
-											/> */}
+
 											<span className="sr-only">Add POI</span>
 										</div>
 									)}
@@ -910,7 +910,7 @@ export default function TripDetailPage() {
 															</div>
 														</div>
 
-														{loggedInUser && ( // Link to create recommendation
+														{isOwner && ( // Link to create recommendation
 															<Link
 																href={`/recommendations/new?tripId=${tripId}&poiId=${
 																	poi._id

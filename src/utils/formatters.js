@@ -1,4 +1,5 @@
 // src/utils/formatters.js
+import { convertDistance, convertSpeed } from "./unitConversion";
 
 /**
  * Formats total seconds into HH:MM:SS string.
@@ -38,10 +39,13 @@ export const formatDuration = (millis) => {
  * @param {number} meters - Distance in meters.
  * @returns {string} Formatted distance string (e.g., '12.3 km') or 'N/A'.
  */
-export const formatDistance = (meters) => {
-	if (typeof meters !== "number" || meters < 0) return "N/A";
-	const kilometers = meters / 1000;
-	return `${kilometers.toFixed(1)} km`;
+// export const formatDistance = (meters) => {
+// 	if (typeof meters !== "number" || meters < 0) return "N/A";
+// 	const kilometers = meters / 1000;
+// 	return `${kilometers.toFixed(1)} km`;
+// };
+export const formatDistance = (meters, preferredUnits = "metric") => {
+	return convertDistance(meters, preferredUnits);
 };
 
 /**
@@ -50,17 +54,24 @@ export const formatDistance = (meters) => {
  * @param {number} durationMillis - Duration in milliseconds.
  * @returns {string} Formatted speed string (e.g., '45.2 km/h') or 'N/A'.
  */
-export const formatSpeed = (distanceMeters, durationMillis) => {
-	if (
-		typeof distanceMeters !== "number" ||
-		distanceMeters < 0 ||
-		typeof durationMillis !== "number" ||
-		durationMillis <= 0 // Avoid division by zero or negative duration
-	) {
-		return "N/A";
-	}
-	const durationSeconds = durationMillis / 1000;
-	const speedMetersPerSecond = distanceMeters / durationSeconds;
-	const speedKmPerHour = speedMetersPerSecond * 3.6; // Conversion factor
-	return `${speedKmPerHour.toFixed(1)} km/h`;
+// export const formatSpeed = (distanceMeters, durationMillis) => {
+// 	if (
+// 		typeof distanceMeters !== "number" ||
+// 		distanceMeters < 0 ||
+// 		typeof durationMillis !== "number" ||
+// 		durationMillis <= 0 // Avoid division by zero or negative duration
+// 	) {
+// 		return "N/A";
+// 	}
+// 	const durationSeconds = durationMillis / 1000;
+// 	const speedMetersPerSecond = distanceMeters / durationSeconds;
+// 	const speedKmPerHour = speedMetersPerSecond * 3.6; // Conversion factor
+// 	return `${speedKmPerHour.toFixed(1)} km/h`;
+// };
+export const formatSpeed = (
+	distanceMeters,
+	durationMillis,
+	preferredUnits = "metric"
+) => {
+	return convertSpeed(distanceMeters, durationMillis, preferredUnits);
 };
