@@ -25,6 +25,7 @@ import {
 	FaCircle,
 	FaImages,
 	FaExpand,
+	FaShareAlt,
 } from "react-icons/fa";
 import { useAuth } from "@/context/AuthContext"; // To check ownership for Edit/Delete buttons
 import {
@@ -37,7 +38,7 @@ import {
 	getTravelModeIcon,
 	getTravelModeName,
 } from "@/utils/getTravelModeIcon";
-import { API_URL } from "@/utils/config";
+import { API_URL, SITE_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
 import LikersModal from "@/components/trips/LikersModal";
 import Modal from "@/components/Modal";
@@ -86,6 +87,85 @@ const ErrorComponent = ({ message }) => (
 	</div>
 );
 
+// --- Generate Metadata for SEO and Open Graph ---
+// export async function generateMetadata({ params }) {
+async function generateMetadata({ params }) {
+	const { tripId } = params;
+	try {
+		// Fetch minimal trip data for meta tags.
+		// This fetch happens on the server and won't have a user token,
+		// so it will only succeed for public trips or if the endpoint allows unauthenticated access for public data.
+		const res = await fetch(`${API_URL}/trips/${tripId}`);
+
+		if (!res.ok) {
+			console.error(
+				`Failed to fetch trip ${tripId} for metadata: ${res.status}`
+			);
+			// Return default metadata if trip is not found or not public
+			return {
+				title: "Trip Details | Motorhome Mapper",
+				description: "Explore travel itineraries and adventures.",
+				openGraph: {
+					title: "Trip Details | Motorhome Mapper",
+					description: "Explore travel itineraries and adventures.",
+					images: [{ url: `${SITE_URL}/default-og-image.png` }],
+					url: `${SITE_URL}/trips/${tripId}`,
+					type: "article",
+				},
+			};
+		}
+		const trip = await res.json();
+
+		const title = trip.title || "A Trip";
+		const description = trip.description
+			? trip.description.substring(0, 160) +
+			  (trip.description.length > 160 ? "..." : "")
+			: `Check out this trip: ${title}`;
+
+		let imageUrl = `${SITE_URL}/default-og-image.png`;
+
+		if (trip.photos && trip.photos.length > 0) {
+			// Assuming your API serves photos at /photos/:photoId
+			// and this endpoint is publicly accessible for crawlers.
+			imageUrl = `${API_URL}/photos/${trip.photos[0]}`;
+		}
+		// Future enhancement: Generate a static map preview for og:image
+		// For now, using the first trip photo or a default.
+
+		return {
+			title: `${title} | Motorhome Mapper`,
+			description: description,
+			openGraph: {
+				title: `${title} | Motorhome Mapper`,
+				description: description,
+				images: [
+					{
+						url: imageUrl,
+						width: 1200,
+						height: 630,
+						alt: `Preview of ${title}`,
+					},
+				],
+				url: `${SITE_URL}/trips/${tripId}`,
+				type: "article", // Or 'website' if more appropriate
+			},
+			twitter: {
+				// Optional: Twitter Card tags
+				card: "summary_large_image",
+				title: `${title} | Motorhome Mapper`,
+				description: description,
+				images: [imageUrl],
+			},
+		};
+	} catch (error) {
+		console.error(`Error in generateMetadata for trip ${tripId}:`, error);
+		return {
+			title: "Trip Details | Motorhome Mapper",
+			description: "Explore travel itineraries and adventures.",
+		};
+	}
+}
+
 export default function TripDetailPage() {
 	const params = useParams();
 	const router = useRouter();
@@ -127,6 +207,7 @@ export default function TripDetailPage() {
 	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 	const [selectedImageUrl, setSelectedImageUrl] = useState("");
 	const [isAddPoiModalOpen, setIsAddPoiModalOpen] = useState(false);
+	const [copiedMessageVisible, setCopiedMessageVisible] = useState(false);
 
 	// Fetch trip data
 	useEffect(() => {
@@ -240,6 +321,46 @@ export default function TripDetailPage() {
 	// Check if the logged-in user owns this trip
 	const isOwner =
 		!authLoading && loggedInUser && trip && loggedInUser._id === trip.user._id;
+
+	const canShare =
+		isOwner || (!isOwner && trip?.defaultTripVisibility === "public");
+
+	const handleShare = async () => {
+		const shareUrl = window.location.href;
+		const shareTitle = trip?.title || "Check out this trip!";
+		const shareText = `Take a look at this trip "${
+			trip?.title || " Trip"
+		}" on Motorhome Mapper! ${shareUrl}`;
+
+		if (navigator.share) {
+			try {
+				await navigator.share({
+					title: shareTitle,
+					text: shareText, // Some platforms use text, some use title, url is key
+					url: shareUrl,
+				});
+				console.log("Trip shared successfully via Web Share API");
+			} catch (error) {
+				// User might have cancelled the share dialog, or other error.
+				// Don't automatically fallback to copy unless navigator.share itself is undefined.
+				if (error.name !== "AbortError") {
+					console.error("Error using Web Share API:", error);
+				}
+			}
+		} else {
+			// Fallback for browsers that don't support Web Share API
+			try {
+				await navigator.clipboard.writeText(shareUrl);
+				setCopiedMessageVisible(true);
+				setTimeout(() => setCopiedMessageVisible(false), 2500); // Hide after 2.5s
+			} catch (err) {
+				console.error("Failed to copy link to clipboard:", err);
+				alert(
+					"Failed to copy link. Please copy it manually from the address bar."
+				);
+			}
+		}
+	};
 
 	const handleDeleteTrip = async () => {
 		// Confirmation dialog
@@ -809,6 +930,18 @@ export default function TripDetailPage() {
 						{comments?.length === 1 ? "comment" : "comments"}
 					</span>
 				</a>
+				{/* Share Button */}
+				{canShare && (
+					<button
+						onClick={handleShare}
+						className="cursor-pointer flex items-center p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors duration-150"
+						title="Share this trip"
+						aria-label="Share this trip"
+					>
+						<FaShareAlt className="mr-1 h-4 w-4" />
+						<span>Share</span>
+					</button>
+				)}
 			</div>
 
 			{/* --- Photos Section (Updated) --- */}
