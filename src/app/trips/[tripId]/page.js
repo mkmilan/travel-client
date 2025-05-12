@@ -130,6 +130,13 @@ export default function TripDetailPage() {
 
 	// Fetch trip data
 	useEffect(() => {
+		if (authLoading) {
+			return;
+		}
+		if (!token) {
+			setLoading(false);
+			return;
+		}
 		if (tripId) {
 			const fetchTrip = async () => {
 				setLoading(true);
@@ -165,7 +172,7 @@ export default function TripDetailPage() {
 			setError("Trip ID missing."); // Should not happen normally
 			setLoading(false);
 		}
-	}, [tripId, authLoading, loggedInUser]); // Re-fetch if tripId changes
+	}, [tripId, token, authLoading, loggedInUser]); // Re-fetch if tripId changes
 
 	const fetchComments = useCallback(async () => {
 		if (!tripId) return;
@@ -1063,7 +1070,7 @@ export default function TripDetailPage() {
 									) : (
 										<CommentList
 											comments={comments}
-											loggedInUser={loggedInUser._id}
+											loggedInUser={loggedInUser?._id}
 											tripId={tripId}
 											onDeleteComment={handleDeleteComment}
 										/>

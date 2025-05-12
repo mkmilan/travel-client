@@ -332,7 +332,7 @@ export default function RecommendationForm({
 					onChange={handleInputChange}
 					required
 					maxLength={120}
-					className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+					className="mt-1 block w-full px-3 py-1 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 				/>
 			</div>
 
@@ -352,7 +352,7 @@ export default function RecommendationForm({
 					required
 					rows={4}
 					maxLength={2000}
-					className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+					className="mt-1 block w-full px-3 py-1 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 				/>
 			</div>
 
@@ -416,7 +416,7 @@ export default function RecommendationForm({
 							required
 							step="any" // Allow decimals
 							placeholder="e.g., 40.7128"
-							className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+							className="mt-1 block w-full px-3 py-1 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 						/>
 					</div>
 					<div>
@@ -435,7 +435,7 @@ export default function RecommendationForm({
 							required
 							step="any"
 							placeholder="e.g., -74.0060"
-							className="mt-1 block w-full px-3 py-2 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+							className="mt-1 block w-full px-3 py-1 border border-gray-300  shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
 						/>
 					</div>
 				</div>
@@ -473,7 +473,7 @@ export default function RecommendationForm({
 						<Listbox.Label className="block text-sm font-medium text-gray-700">
 							Primary Category
 						</Listbox.Label>
-						<Listbox.Button className="relative w-full cursor-default  border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm">
+						<Listbox.Button className="relative w-full cursor-default  border border-gray-300 bg-white py-1 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm">
 							<span className="block truncate">{selectedCategoryLabel}</span>
 							<span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
 								<FaChevronDown
@@ -493,7 +493,7 @@ export default function RecommendationForm({
 									<Listbox.Option
 										key={cat.value}
 										className={({ active }) =>
-											`relative cursor-default select-none py-2 pl-10 pr-4 ${
+											`relative cursor-default select-none py-1 pl-10 pr-4 ${
 												active
 													? "bg-indigo-100 text-indigo-900"
 													: "text-gray-900"
@@ -576,7 +576,7 @@ export default function RecommendationForm({
 					multiple
 					accept="image/jpeg, image/png, image/webp, image/gif" // Specify acceptable image types
 					onChange={handlePhotoChange}
-					className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file: file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+					className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-4 file: file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
 				/>
 				{/* Optional: Preview selected photos */}
 				{photos.length > 0 && (

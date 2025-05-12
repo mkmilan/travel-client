@@ -13,9 +13,9 @@ export const StarRatingInput = ({ rating, setRating }) => {
 					aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
 				>
 					{rating >= star ? (
-						<FaStar className="w-6 h-6" />
+						<FaStar className="w-5 h-5" />
 					) : (
-						<FaRegStar className="w-6 h-6" />
+						<FaRegStar className="w-5 h-5" />
 					)}
 				</button>
 			))}

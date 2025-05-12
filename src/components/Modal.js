@@ -37,10 +37,14 @@ export default function Modal({
 	// Determine panel classes based on size and whether it should grow (for map/images)
 	const isGrowable = size === "screen-h" || size === "full";
 	const panelSizeClass = sizeClasses[size] || sizeClasses.md;
-	const panelLayoutClass = isGrowable ? "flex flex-col" : ""; // Use flex layout for growable content
-	const contentAreaClass = isGrowable
-		? "flex-grow overflow-hidden p-0 sm:p-2"
-		: " p-5"; // No padding or different padding for map/image
+	// const panelLayoutClass = isGrowable ? "flex flex-col" : ""; // Use flex layout for growable content
+	const panelLayoutClass = "flex flex-col";
+	const contentPaddingClass =
+		size === "screen-h" || size === "full" ? "p-0 sm:p-2" : "p-4 sm:p-5"; // Adjusted padding slightly
+	// const contentAreaClass = isGrowable
+	// 	? "flex-grow overflow-hidden p-0 sm:p-2"
+	// 	: " p-5"; // No padding or different padding for map/image
+	const contentAreaClass = `flex-grow overflow-y-auto ${contentPaddingClass}`;
 
 	return (
 		<Transition
@@ -79,7 +83,7 @@ export default function Modal({
 						leaveTo="opacity-0 scale-95"
 					>
 						<DialogPanel
-							className={`relative w-full ${panelSizeClass} ${panelLayoutClass} transform  bg-white text-left align-middle shadow-xl transition-all ${panelClassName}`}
+							className={`relative w-full ${panelSizeClass} ${panelLayoutClass} max-h-[90vh] transform  bg-white text-left align-middle shadow-xl transition-all ${panelClassName}`}
 						>
 							{/* Optional Header with Title */}
 							{title && (
