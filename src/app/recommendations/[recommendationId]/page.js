@@ -16,6 +16,7 @@ import LoadingComponent from "@/components/LoadingComponent";
 import ProfilePicture from "@/components/ProfilePicture";
 import Modal from "@/components/Modal";
 import { FaStar, FaMapMarkerAlt, FaTag, FaCalendarAlt } from "react-icons/fa";
+import { formatDateTime } from "@/utils/formatters";
 
 const RecommendationMap = dynamic(
 	() => import("@/components/map/RecommendationMap"),
@@ -50,6 +51,10 @@ export default function RecommendationDetailPage() {
 	const params = useParams();
 	const { recommendationId } = params;
 	const { loggedInUser, token } = useAuth(); // For potential edit/delete later
+	const userSettings = loggedInUser?.settings || {
+		dateFormat: "YYYY-MM-DD",
+		timeFormat: "24h",
+	};
 
 	const [recommendation, setRecommendation] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -172,14 +177,18 @@ export default function RecommendationDetailPage() {
 					</div>
 					<div
 						className="flex items-center"
-						title={`Created: ${new Date(
-							createdAt
-						).toLocaleString()}, Updated: ${new Date(
-							updatedAt
-						).toLocaleString()}`}
+						title={`Created: ${formatDateTime(
+							recommendation.createdAt,
+							userSettings
+						)}, Updated: ${formatDateTime(
+							recommendation.updatedAt,
+							userSettings
+						)}`}
 					>
 						<FaCalendarAlt className="mr-1.5 text-gray-400" />
-						<span>Added {new Date(createdAt).toLocaleDateString()}</span>
+						<span>
+							{formatDateTime(recommendation.createdAt, userSettings)}
+						</span>
 					</div>
 					{associatedTrip && (
 						<Link

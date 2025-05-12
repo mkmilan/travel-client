@@ -25,7 +25,11 @@ import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
 import Modal from "@/components/Modal";
 // import PoisModal from "@/components/pois/PoisModal";
-import { formatDistance, formatDuration } from "@/utils/formatters";
+import {
+	formatDistance,
+	formatDuration,
+	formatDateTime,
+} from "@/utils/formatters";
 
 // Placeholder loading component
 const LoadingSpinner = () => (
@@ -306,14 +310,8 @@ const RecommendationsModal = ({ isOpen, onClose, userId }) => {
 };
 
 // --- POI List Item Component ---
-const PoiListItem = ({ poi }) => {
-	const poiDate = poi.timestamp
-		? new Date(poi.timestamp).toLocaleDateString("en-US", {
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-		  })
-		: "Date unknown";
+const PoiListItem = ({ poi, userSettings }) => {
+	const poiDate = formatDateTime(poi.timestamp, userSettings);
 
 	return (
 		<div className="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
@@ -708,12 +706,19 @@ export default function ProfilePage() {
 	}
 
 	// Format join date
-	const joinDate = new Date(profileData.createdAt).toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-	});
+	// const joinDate = new Date(profileData.createdAt).toLocaleDateString("en-US", {
+	// 	year: "numeric",
+	// 	month: "long",
+	// 	day: "numeric",
+	// });
 	// console.log("profilePictureUrl", profilePictureUrl);
+	// const preferedDateFormat = loggedInUser?.settings?.dateFormat || "YYYY-MM-DD";
+	// const preferedTimeFormat = loggedInUser?.settings?.timeFormat || "HH:mm:ss";
+	const userSettings = loggedInUser?.settings || {
+		dateFormat: "YYYY-MM-DD",
+		timeFormat: "24h",
+	};
+	const joinDate = formatDateTime(profileData?.createdAt, userSettings);
 
 	return (
 		<>
@@ -987,6 +992,7 @@ export default function ProfilePage() {
 				isOpen={isPoisModalOpen}
 				onClose={() => setIsPoisModalOpen(false)}
 				userId={userId}
+				userSettings={userSettings}
 			/>
 
 			<PhotoViewerModal

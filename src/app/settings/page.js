@@ -22,7 +22,6 @@ const visibilityOptions = [
 ];
 
 const travelModeOptions = [
-	{ value: "", label: "Select a mode..." },
 	{ value: "motorhome", label: "Motorhome" },
 	{ value: "campervan", label: "Campervan" },
 	{ value: "car", label: "Car" },

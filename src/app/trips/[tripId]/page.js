@@ -31,6 +31,7 @@ import {
 	formatDuration,
 	formatDistance,
 	formatSpeed,
+	formatDateTime,
 } from "@/utils/formatters";
 import {
 	getTravelModeIcon,
@@ -90,7 +91,12 @@ export default function TripDetailPage() {
 	const router = useRouter();
 	const { tripId } = params;
 	const { user: loggedInUser, token, loading: authLoading } = useAuth();
+
 	const preferredUnits = loggedInUser?.settings?.preferredUnits || "metric";
+	const userSettings = loggedInUser?.settings || {
+		dateFormat: "YYYY-MM-DD",
+		timeFormat: "24h",
+	};
 
 	const [trip, setTrip] = useState(null);
 	const [comments, setComments] = useState([]);
@@ -533,11 +539,12 @@ export default function TripDetailPage() {
 							<span>{trip.user.username}</span>
 							<span className="mx-2">·</span>
 							<span>
-								{new Date(trip.startDate).toLocaleDateString()} at{" "}
+								{/* {new Date(trip.startDate).toLocaleDateString()} at{" "}
 								{new Date(trip.startDate).toLocaleTimeString([], {
 									hour: "2-digit",
 									minute: "2-digit",
-								})}
+								})} */}
+								{formatDateTime(trip.startDate, userSettings, true)}
 							</span>
 						</div>
 					</div>

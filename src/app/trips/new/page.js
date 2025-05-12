@@ -17,7 +17,7 @@ import { API_URL } from "@/utils/config";
 import { FaMapMarkerAlt, FaSpinner, FaPlusCircle } from "react-icons/fa";
 
 export default function NewTripPage() {
-	const { token } = useAuth();
+	const { token, user } = useAuth();
 	const router = useRouter();
 	const tracker = useGpsTracker();
 
@@ -31,7 +31,8 @@ export default function NewTripPage() {
 	const [poiDescription, setPoiDescription] = useState("");
 	const [isRecommendationModalOpen, setIsRecommendationModalOpen] =
 		useState(false);
-
+	const initialUserTravelMode =
+		user?.settings?.defaultTravelMode || "motorhome";
 	// Generate GPX when tracking stops and data needs saving
 	useEffect(() => {
 		if (
@@ -554,6 +555,7 @@ export default function NewTripPage() {
 							saveError={saveError}
 							initialStartLocationName={initialStartLocation}
 							initialEndLocationName={initialEndLocation}
+							defaultTravelMode={initialUserTravelMode}
 						/>
 						{/* Form Actions (Buttons outside the form component) */}
 						<div className="flex justify-end space-x-3 pt-4 mt-4 border-t border-gray-200">

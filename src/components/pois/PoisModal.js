@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from "react";
 import { API_URL } from "@/utils/config";
 import Modal from "@/components/Modal";
+import { formatDateTime } from "@/utils/formatters";
+import { useAuth } from "@/context/AuthContext";
 
 const LoadingSpinner = () => (
 	<div className="flex justify-center items-center h-64">
@@ -12,14 +14,16 @@ const LoadingSpinner = () => (
 );
 
 // --- POI List Item Component ---
-const PoiListItem = ({ poi }) => {
-	const poiDate = poi.timestamp
-		? new Date(poi.timestamp).toLocaleDateString("en-US", {
-				year: "numeric",
-				month: "short",
-				day: "numeric",
-		  })
-		: "Date unknown";
+const PoiListItem = ({ poi, userSettings }) => {
+	// Update join date formatting
+	// const poiDate = poi.timestamp
+	// 	? new Date(poi.timestamp).toLocaleDateString("en-US", {
+	// 			year: "numeric",
+	// 			month: "short",
+	// 			day: "numeric",
+	// 	  })
+	// 	: "Date unknown";
+	const poiDate = formatDateTime(poi.timestamp, userSettings);
 
 	return (
 		<div className="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
@@ -53,6 +57,7 @@ const PoiListItem = ({ poi }) => {
 };
 
 const PoisModal = ({ isOpen, onClose, userId }) => {
+	const { user } = useAuth();
 	const [pois, setPois] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -60,6 +65,11 @@ const PoisModal = ({ isOpen, onClose, userId }) => {
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalCount, setTotalCount] = useState(0);
 	const limit = 15; // Number of POIs per page
+
+	const userSettings = user?.settings || {
+		dateFormat: "YYYY-MM-DD",
+		timeFormat: "24h",
+	};
 
 	const fetchPois = async (pageNum = 1) => {
 		if (!userId) return;
@@ -122,6 +132,7 @@ const PoisModal = ({ isOpen, onClose, userId }) => {
 						<PoiListItem
 							key={poi._id}
 							poi={poi}
+							userSettings={userSettings}
 						/>
 					))}
 

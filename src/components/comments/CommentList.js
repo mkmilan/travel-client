@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FaTrash } from "react-icons/fa";
 import ProfilePicture from "../ProfilePicture";
+import { formatDateTime } from "@/utils/formatters";
 
 export default function CommentList({
 	comments = [],
@@ -13,6 +14,10 @@ export default function CommentList({
 	tripId,
 }) {
 	const [deletingId, setDeletingId] = useState(null);
+	const userSettings = loggedInUser?.settings || {
+		dateFormat: "YYYY-MM-DD",
+		timeFormat: "24h",
+	};
 
 	if (comments.length === 0) {
 		return <p className="text-gray-500 text-sm">No comments yet.</p>;
@@ -66,7 +71,8 @@ export default function CommentList({
 									<>{comment.user.username}</>
 								</Link>
 								<span className="text-xs text-gray-400">
-									{new Date(comment.createdAt).toLocaleDateString()}
+									{/* {new Date(comment.createdAt).toLocaleDateString()} */}
+									{formatDateTime(comment.createdAt, userSettings, true)}
 								</span>
 							</div>
 							<p className="text-sm text-gray-700 whitespace-pre-wrap mb-2">

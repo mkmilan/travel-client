@@ -1,4 +1,5 @@
 // src/utils/formatters.js
+import { format } from "date-fns";
 import { convertDistance, convertSpeed } from "./unitConversion";
 
 /**
@@ -74,4 +75,45 @@ export const formatSpeed = (
 	preferredUnits = "metric"
 ) => {
 	return convertSpeed(distanceMeters, durationMillis, preferredUnits);
+};
+
+/**
+ * Formats a date according to user preferences
+ * @param {Date|string|number} date - The date to format
+ * @param {Object} userSettings - User settings object containing dateFormat and timeFormat
+ * @param {boolean} includeTime - Whether to include time in the output
+ * @returns {string} Formatted date/time string
+ */
+export const formatDateTime = (date, userSettings, includeTime = false) => {
+	if (!date) return "N/A";
+
+	const dateObj = new Date(date);
+	if (!(dateObj instanceof Date) || isNaN(dateObj)) return "Invalid Date";
+
+	const { dateFormat = "YYYY-MM-DD", timeFormat = "24h" } = userSettings || {};
+
+	// Convert date format to date-fns format
+	const dateFormatMap = {
+		"MM/DD/YYYY": "MM/dd/yyyy",
+		"DD/MM/YYYY": "dd/MM/yyyy",
+		"YYYY-MM-DD": "yyyy-MM-dd",
+	};
+
+	const timeFormatMap = {
+		"12h": "h:mm a",
+		"24h": "HH:mm",
+	};
+
+	const dateFnsFormat = dateFormatMap[dateFormat] || "dd-mm-yyyy";
+	const timeFnsFormat = timeFormatMap[timeFormat] || "HH:mm";
+
+	try {
+		if (includeTime) {
+			return format(dateObj, `${dateFnsFormat} ${timeFnsFormat}`);
+		}
+		return format(dateObj, dateFnsFormat);
+	} catch (error) {
+		console.error("Date formatting error:", error);
+		return "Invalid Date";
+	}
 };
