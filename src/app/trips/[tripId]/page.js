@@ -943,7 +943,11 @@ export default function TripDetailPage() {
 					</button>
 				)}
 			</div>
-
+			{copiedMessageVisible && (
+				<div className="fixed bottom-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-xl text-sm z-50">
+					Link copied to clipboard!
+				</div>
+			)}
 			{/* --- Photos Section (Updated) --- */}
 			{trip.photos && trip.photos.length > 0 && (
 				<div className="bg-white shadow-md border border-gray-200 mb-6 pt-2 ">

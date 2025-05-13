@@ -17,6 +17,7 @@ import {
 	FaUserCircle,
 	FaCog,
 	FaStar,
+	FaInfoCircle,
 } from "react-icons/fa"; // Example: Font Awesome icons
 import { MdAddLocationAlt } from "react-icons/md"; // Example: Material Design
 import ProfilePicture from "./ProfilePicture";
@@ -135,12 +136,12 @@ export default function Navbar() {
 								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
 							></NavLink> */}
 
-							{/* <NavLink
-								href="/settings"
-								icon={FaCog}
-								title="Settings"
+							<NavLink
+								href="/about"
+								icon={FaInfoCircle}
+								title="About"
 								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
-							></NavLink> */}
+							></NavLink>
 
 							{/* Logout Button */}
 							<NavButton
@@ -187,12 +188,12 @@ export default function Navbar() {
 								className="text-gray-600 hover:text-primary transition-colors p-2 rounded-full hover:bg-gray-100" // Added padding for better click area
 							></NavLink> */}
 
-							{/* <NavLink
-								href="/settings"
-								icon={FaCog}
-								title="Settings"
+							<NavLink
+								href="/about"
+								icon={FaInfoCircle}
+								title="About"
 								className="text-gray-600 hover:text-primary transition-colors p-1 rounded-full hover:bg-gray-100" // Added padding for better click area
-							></NavLink> */}
+							></NavLink>
 
 							<NavButton
 								onClick={logout}

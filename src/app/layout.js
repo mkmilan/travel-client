@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import BottomNavWrapper from "@/components/navigation/BottomNavWrapper";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 
 import "leaflet/dist/leaflet.css";
 const inter = Inter({ subsets: ["latin"] });
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
 						{children}
 						{/* </main> */}
 					</BottomNavWrapper>
+					<CookieConsentBanner />
 				</AuthProvider>
 			</body>
 		</html>
