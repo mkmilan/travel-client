@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/utils/config";
 
 export default function RegisterPage() {
@@ -12,6 +13,7 @@ export default function RegisterPage() {
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
+	const { login } = useAuth();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault(); // Prevent default form submission
@@ -38,6 +40,7 @@ export default function RegisterPage() {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({ username, email, password }),
+				credentials: "include", // Important: allows server to set cookie
 			});
 
 			const data = await res.json();
@@ -48,9 +51,13 @@ export default function RegisterPage() {
 			}
 
 			// --- Handle Success ---
-			console.log("Registration successful:", data);
-			// Optional: Show a success message before redirecting
-			router.push(`/login`); // Redirect to login page on success
+			// console.log("Registration successful:", data);
+			// // Optional: Show a success message before redirecting
+			// router.push(`/login`); // Redirect to login page on success
+			console.log("Registration successful, user data:", data);
+			// Automatically log the user in by calling the context's login method
+			// The 'data' here is the user object from the backend
+			login(data); // Redirect handled by login function in AuthContext
 		} catch (err) {
 			// --- Handle Errors ---
 			console.error("Registration failed:", err);

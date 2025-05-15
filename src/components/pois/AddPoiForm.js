@@ -24,7 +24,7 @@ export default function AddPoiForm({
 	onPoiAdded, // Callback function after successful addition
 	onCancel, // Function to close the modal/form
 }) {
-	const { token } = useAuth();
+	const { isAuthenticated } = useAuth();
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
@@ -55,7 +55,7 @@ export default function AddPoiForm({
 			setError("Please select a location on the map.");
 			return;
 		}
-		if (!token) {
+		if (!isAuthenticated) {
 			setError("Authentication error. Please log in again.");
 			return;
 		}
@@ -65,9 +65,9 @@ export default function AddPoiForm({
 		try {
 			const res = await fetch(`${API_URL}/trips/${tripId}/pois`, {
 				method: "POST",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
 					name: formData.name,

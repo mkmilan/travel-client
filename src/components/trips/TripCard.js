@@ -33,7 +33,7 @@ const MiniMap = dynamic(() => import("@/components/map/MiniMap"), {
 });
 
 export default function TripCard({ trip }) {
-	const { user: loggedInUser, token } = useAuth();
+	const { user: loggedInUser, isAuthenticated } = useAuth();
 	const [localLikesCount, setLocalLikesCount] = useState(trip?.likesCount || 0);
 	const [isLikedByMe, setIsLikedByMe] = useState(false); // We need a way to determine initial state
 	const [likeInProgress, setLikeInProgress] = useState(false);
@@ -61,7 +61,7 @@ export default function TripCard({ trip }) {
 		e.preventDefault(); // Prevent link navigation when clicking the button
 		e.stopPropagation(); // Stop event bubbling up to the Link
 
-		if (!loggedInUser || !token) {
+		if (!loggedInUser || !isAuthenticated) {
 			alert("Please log in to like trips."); // Or redirect
 			return;
 		}
@@ -76,7 +76,7 @@ export default function TripCard({ trip }) {
 		try {
 			const res = await fetch(url, {
 				method: method,
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
 			});
 			const data = await res.json(); // Backend returns new count
 

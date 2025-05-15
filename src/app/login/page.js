@@ -32,6 +32,7 @@ export default function LoginPage() {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({ email, password }),
+				credentials: "include", // Include cookies in the request
 				// Add timeout to prevent hanging requests
 				signal: AbortSignal.timeout(10000), // 10 second timeout
 			});
@@ -41,26 +42,37 @@ export default function LoginPage() {
 			try {
 				data = await res.json();
 			} catch (parseError) {
+				// If response is not JSON (e.g. server down, network error before response)
+				// Try to get text for more info if possible
+				const textResponse = await res
+					.text()
+					.catch(() => "Server returned non-JSON response.");
+				console.error("Login API response error, body:", textResponse);
 				throw new Error("Unable to connect to server. Please try again later.");
 			}
 
 			if (!res.ok) {
 				// Handle specific error cases with friendlier messages
 				if (res.status === 401) {
-					throw new Error("Invalid email or password. Please try again.");
+					throw new Error(
+						data.message || "Invalid email or password. Please try again."
+					);
 				} else if (res.status === 400) {
 					throw new Error(
 						data.message || "Please check your information and try again."
 					);
 				} else if (res.status >= 500) {
-					throw new Error("Server error. Please try again later.");
+					throw new Error(
+						data.message || "Server error. Please try again later."
+					);
 				} else {
 					throw new Error(data.message || `Error: ${res.status}`);
 				}
 			}
 
-			console.log("Login successful");
-			login(data, data.token);
+			console.log("Login successful user data :", data);
+			// login(data, data.token);
+			login(data);
 		} catch (err) {
 			// Handle network errors specifically
 			if (err.name === "AbortError") {

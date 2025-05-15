@@ -24,6 +24,7 @@ export default function EditProfilePage() {
 		token,
 		loading: authLoading,
 		setUser,
+		isAuthenticated,
 	} = useAuth();
 
 	const [bio, setBio] = useState("");
@@ -132,11 +133,7 @@ export default function EditProfilePage() {
 		try {
 			const res = await fetch(`${API_URL}/users/me`, {
 				method: "PUT",
-				headers: {
-					// DO NOT set 'Content-Type': 'application/json'
-					// Fetch API sets the correct 'multipart/form-data' boundary automatically
-					Authorization: `Bearer ${token}`,
-				},
+				credentials: "include",
 				body: formData, // Send FormData object
 			});
 

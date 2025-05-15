@@ -1,7 +1,7 @@
 // src/app/profile/[userId]/page.jsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, use } from "react";
 import { useParams } from "next/navigation";
 import RecommendationCard from "@/components/recommendations/RecommendationCard";
 import Image from "next/image";
@@ -39,7 +39,13 @@ const LoadingSpinner = () => (
 );
 
 // --- User Item for the List ---
-const UserListItem = ({ user, loggedInUserId, token, onFollowUpdate }) => {
+const UserListItem = ({
+	user,
+	loggedInUserId,
+	isAuthenticated,
+	onFollowUpdate,
+}) => {
+	// const {isAuthenticated} = useAuth();
 	const [isFollowing, setIsFollowing] = useState(
 		user.followers?.includes(loggedInUserId) // Check if logged-in user is in the *listed user's* followers
 	);
@@ -47,7 +53,7 @@ const UserListItem = ({ user, loggedInUserId, token, onFollowUpdate }) => {
 	const isOwnItem = user._id === loggedInUserId;
 
 	const handleFollowToggle = async () => {
-		if (!loggedInUserId || !token || isOwnItem) return;
+		if (!loggedInUserId || isOwnItem || !isAuthenticated) return;
 		setFollowLoading(true);
 		const url = `${API_URL}/users/${user._id}/follow`;
 		const method = isFollowing ? "DELETE" : "POST";
@@ -55,7 +61,8 @@ const UserListItem = ({ user, loggedInUserId, token, onFollowUpdate }) => {
 		try {
 			const res = await fetch(url, {
 				method: method,
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
+				// headers: { Authorization: `Bearer ${token}` },
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || "Follow action failed");
@@ -111,7 +118,7 @@ const UserListItem = ({ user, loggedInUserId, token, onFollowUpdate }) => {
 
 // --- Follow List Modal Implementation ---
 const FollowListModal = ({ isOpen, onClose, userId, type }) => {
-	const { user: loggedInUser, token } = useAuth();
+	const { user: loggedInUser, token, isAuthenticated } = useAuth();
 	const [list, setList] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -133,10 +140,11 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 					// GET /api/users/:userId/following
 					// These endpoints should return an array of user objects with at least _id, username, profilePictureUrl, and followers array
 					const res = await fetch(`${API_URL}/users/${userId}/${endpoint}`, {
-						headers: {
-							// Send token if the endpoint needs it (e.g., to check follow status relative to logged-in user)
-							...(token && { Authorization: `Bearer ${token}` }),
-						},
+						credentials: "include",
+						// headers: {
+						// 	// Send token if the endpoint needs it (e.g., to check follow status relative to logged-in user)
+						// 	...(token && { Authorization: `Bearer ${token}` }),
+						// },
 					});
 					const data = await res.json();
 
@@ -158,7 +166,7 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 			};
 			fetchList();
 		}
-	}, [isOpen, userId, type, token]); // Refetch when modal opens or type/user changes
+	}, [isOpen, userId, type, isAuthenticated]); // Refetch when modal opens or type/user changes
 
 	// Optional: Handle follow updates from UserListItem if needed to refresh parent state
 	const handleFollowUpdateInModal = (updatedUserId, newFollowState) => {
@@ -189,8 +197,9 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 							key={user._id}
 							user={user}
 							loggedInUserId={loggedInUser?._id}
-							token={token}
+							// token={token}
 							onFollowUpdate={handleFollowUpdateInModal}
+							isAuthenticated={isAuthenticated}
 						/>
 					))}
 					{/* Add pagination controls here if implementing */}
@@ -511,7 +520,7 @@ const PhotoViewerModal = ({
 export default function ProfilePage() {
 	const params = useParams();
 	const { userId } = params;
-	const { user, token, loading: authLoading } = useAuth();
+	const { user, token, loading: authLoading, isAuthenticated } = useAuth();
 	const [profileData, setProfileData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -594,7 +603,7 @@ export default function ProfilePage() {
 
 	// --- Follow/Unfollow Handlers ---
 	const handleFollowToggle = async () => {
-		if (!loggedInUser || !token) {
+		if (!loggedInUser || !isAuthenticated) {
 			alert("Please log in to follow users."); // Or redirect to login
 			return;
 		}
@@ -609,7 +618,8 @@ export default function ProfilePage() {
 		try {
 			const res = await fetch(url, {
 				method: method,
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
+				// headers: { Authorization: `Bearer ${token}` },
 			});
 			const data = await res.json();
 

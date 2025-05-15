@@ -53,7 +53,12 @@ const timeFormatOptions = [
 ];
 
 const UserSettingsPage = () => {
-	const { user, token, loading: authLoading, setUser: setAuthUser } = useAuth();
+	const {
+		user,
+		loading: authLoading,
+		setUser: setAuthUser,
+		isAuthenticated,
+	} = useAuth();
 	const router = useRouter();
 
 	const [settings, setSettings] = useState({
@@ -71,14 +76,12 @@ const UserSettingsPage = () => {
 	const [success, setSuccess] = useState("");
 
 	const fetchSettings = useCallback(async () => {
-		if (!token) return;
+		if (!isAuthenticated) return;
 		setLoading(true);
 		setError("");
 		try {
 			const res = await fetch(`${API_URL}/users/settings`, {
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
+				credentials: "include",
 			});
 			const data = await res.json();
 			if (!res.ok) {
@@ -92,7 +95,7 @@ const UserSettingsPage = () => {
 		} finally {
 			setLoading(false);
 		}
-	}, [token]);
+	}, [isAuthenticated]);
 
 	useEffect(() => {
 		if (authLoading) return;
@@ -101,7 +104,7 @@ const UserSettingsPage = () => {
 			return;
 		}
 		fetchSettings();
-	}, [user, token, authLoading, router, fetchSettings]);
+	}, [user, isAuthenticated, authLoading, router, fetchSettings]);
 
 	const handleSettingChange = (name, value) => {
 		setSettings((prev) => ({ ...prev, [name]: value }));
@@ -111,16 +114,16 @@ const UserSettingsPage = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		if (!token) return;
+		if (!isAuthenticated) return;
 		setSaving(true);
 		setError("");
 		setSuccess("");
 		try {
 			const res = await fetch(`${API_URL}/users/settings`, {
 				method: "PUT",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify(settings),
 			});
@@ -143,6 +146,7 @@ const UserSettingsPage = () => {
 			console.error("Update settings error:", err);
 		} finally {
 			setSaving(false);
+			router.push(`/profile/${user._id}`);
 		}
 	};
 

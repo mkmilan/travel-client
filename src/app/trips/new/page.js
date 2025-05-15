@@ -17,7 +17,7 @@ import { API_URL } from "@/utils/config";
 import { FaMapMarkerAlt, FaSpinner, FaPlusCircle } from "react-icons/fa";
 
 export default function NewTripPage() {
-	const { token, user } = useAuth();
+	const { isAuthenticated, user } = useAuth();
 	const router = useRouter();
 	const tracker = useGpsTracker();
 
@@ -106,8 +106,8 @@ export default function NewTripPage() {
 			setIsSaving(false);
 			return;
 		}
-		if (!token) {
-			setSaveError("Cannot save: Authentication token is missing.");
+		if (!isAuthenticated) {
+			setSaveError("Cannot save: Authentication is missing.");
 			setIsSaving(false);
 			return;
 		}
@@ -117,9 +117,9 @@ export default function NewTripPage() {
 		try {
 			const res = await fetch(`${API_URL}/trips`, {
 				method: "POST",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
 					...formDataFromSaveForm, // title, description, start/end names
@@ -224,7 +224,7 @@ export default function NewTripPage() {
 							// Make the API call
 							const recRes = await fetch(`${API_URL}/recommendations`, {
 								method: "POST",
-								headers: { Authorization: `Bearer ${token}` },
+								credentials: "include",
 								body: recFormData,
 							});
 							const recResult = await recRes.json();

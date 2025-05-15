@@ -55,7 +55,7 @@ export default function RecommendationForm({
 	isModal = false,
 }) {
 	const router = useRouter();
-	const { token } = useAuth();
+	const { isAuthenticated } = useAuth();
 	const [formData, setFormData] = useState({
 		name: initialData.name || "",
 		description: initialData.description || "",
@@ -271,10 +271,7 @@ export default function RecommendationForm({
 
 			const response = await fetch(apiUrl, {
 				method: method,
-				headers: {
-					Authorization: `Bearer ${token}`,
-					// No 'Content-Type' for FormData
-				},
+				credentials: "include",
 				body: submissionData,
 			});
 

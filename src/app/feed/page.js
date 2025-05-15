@@ -6,23 +6,24 @@ import TripCard from "@/components/trips/TripCard";
 import { API_URL } from "@/utils/config";
 
 export default function FeedPage() {
-	const { user, token } = useAuth();
+	const { user, token, isAuthenticated } = useAuth();
 	const [feedTrips, setFeedTrips] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 
 	useEffect(() => {
 		// Only fetch if token is available (ProtectedRoute handles initial login check)
-		if (token) {
+		if (isAuthenticated) {
 			const fetchFeed = async () => {
 				setLoading(true);
 				setError("");
 				try {
 					const res = await fetch(`${API_URL}/trips/feed`, {
+						credentials: "include",
 						// Relative URL
-						headers: {
-							Authorization: `Bearer ${token}`,
-						},
+						// headers: {
+						// 	Authorization: `Bearer ${isAuthenticated}`,
+						// },
 					});
 					const data = await res.json();
 					if (!res.ok) {
@@ -41,11 +42,11 @@ export default function FeedPage() {
 
 			fetchFeed();
 		} else {
-			// Handle case where token somehow becomes null after initial load
-			setError("Authentication token not found.");
+			// Handle case where isAuthenticated somehow becomes null after initial load
+			setError("Authentication isAuthenticated not found.");
 			setLoading(false);
 		}
-	}, [token]); // Re-fetch if token changes
+	}, [isAuthenticated]); // Re-fetch if token changes
 
 	// return (
 	// 	<ProtectedRoute>

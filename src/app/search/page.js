@@ -130,7 +130,7 @@ const RecommendationResultItem = ({ recommendation }) => (
 );
 
 export default function SearchPage() {
-	const { user: loggedInUser, token } = useAuth();
+	const { user: loggedInUser, isAuthenticated } = useAuth();
 	const [searchTerm, setSearchTerm] = useState("");
 	const [results, setResults] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -168,10 +168,7 @@ export default function SearchPage() {
 						searchTerm
 					)}&type=${searchType}`,
 					{
-						headers: {
-							// Include token if you want to personalize results or check follow status server-side
-							Authorization: `Bearer ${token}`,
-						},
+						credentials: "include",
 					}
 				);
 				const data = await res.json();
@@ -203,11 +200,11 @@ export default function SearchPage() {
 		}, 500); // Delay API call by 500ms after user stops typing
 
 		return () => clearTimeout(delayDebounceFn); // Cleanup timeout on unmount or searchTerm change
-	}, [searchTerm, searchType, token, loggedInUser]);
+	}, [searchTerm, searchType, isAuthenticated, loggedInUser]);
 
 	// Follow/Unfollow Handler for Search Results
 	const handleFollowToggle = async (userIdToToggle, currentlyFollowing) => {
-		if (!loggedInUser || !token) {
+		if (!loggedInUser || !isAuthenticated) {
 			alert("Please log in to follow users.");
 			return;
 		}
@@ -222,7 +219,7 @@ export default function SearchPage() {
 		try {
 			const res = await fetch(url, {
 				method: method,
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
 			});
 			const data = await res.json();
 

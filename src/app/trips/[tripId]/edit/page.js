@@ -78,7 +78,11 @@ export default function EditTripPage() {
 	const params = useParams();
 	const router = useRouter();
 	const { tripId } = params;
-	const { user: loggedInUser, token, loading: authLoading } = useAuth();
+	const {
+		user: loggedInUser,
+		isAuthenticated,
+		loading: authLoading,
+	} = useAuth();
 
 	// Form state for details
 	const [title, setTitle] = useState("");
@@ -107,15 +111,14 @@ export default function EditTripPage() {
 
 	// Fetch existing trip data
 	const fetchTripData = useCallback(async () => {
-		if (!tripId || authLoading || !loggedInUser || !token) return; // Ensure all prerequisites are met
+		if (!tripId || authLoading || !loggedInUser || !isAuthenticated) return; // Ensure all prerequisites are met
 
 		setLoading(true);
 		setError("");
 		try {
 			// Fetch the specific trip using the environment variable
 			const res = await fetch(`${API_URL}/trips/${tripId}`, {
-				// Sending token even for GET might be useful if endpoint becomes protected later
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || "Failed to fetch trip data");
@@ -150,18 +153,18 @@ export default function EditTripPage() {
 		} finally {
 			setLoading(false);
 		}
-	}, [tripId, authLoading, loggedInUser, router, token, API_URL]);
+	}, [tripId, authLoading, loggedInUser, router, isAuthenticated, API_URL]);
 
 	useEffect(() => {
 		// Only fetch when auth isn't loading and we have the necessary info
-		if (!authLoading && loggedInUser && token && tripId) {
+		if (!authLoading && loggedInUser && isAuthenticated && tripId) {
 			fetchTripData();
 		} else if (!authLoading && !loggedInUser) {
 			// Handle case where user logs out while on the page?
 			setLoading(false);
 			setError("Please log in to edit.");
 		}
-	}, [authLoading, loggedInUser, token, tripId, fetchTripData]);
+	}, [authLoading, loggedInUser, isAuthenticated, tripId, fetchTripData]);
 
 	// --- Handle File Selection ---
 	const handleFileChange = (e) => {
@@ -199,7 +202,7 @@ export default function EditTripPage() {
 			setUploadError(`Maximum ${maxPhotos} photos allowed.`);
 			return;
 		}
-		if (!token || !tripId) {
+		if (!isAuthenticated || !tripId) {
 			setUploadError("Auth/Trip ID missing.");
 			return;
 		}
@@ -216,7 +219,7 @@ export default function EditTripPage() {
 			// Use environment variable for API URL
 			const res = await fetch(`${API_URL}/trips/${tripId}/photos`, {
 				method: "POST",
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
 				body: formData,
 			});
 			const data = await res.json();
@@ -237,7 +240,7 @@ export default function EditTripPage() {
 
 	// --- Handle Delete Photo ---
 	const handleDeletePhoto = async (photoIdToDelete) => {
-		if (!photoIdToDelete || !token || !tripId) return;
+		if (!photoIdToDelete || !isAuthenticated || !tripId) return;
 		if (!window.confirm("Delete this photo permanently?")) return;
 
 		setIsDeletingPhoto(photoIdToDelete);
@@ -260,7 +263,7 @@ export default function EditTripPage() {
 				`${API_URL}/trips/${tripId}/photos/${photoIdToDelete}`,
 				{
 					method: "DELETE",
-					headers: { Authorization: `Bearer ${token}` },
+					credentials: "include",
 					// Add a timeout parameter for the fetch request
 					// signal: AbortSignal.timeout(5000), // 10 second timeout for the network request
 				}
@@ -308,9 +311,9 @@ export default function EditTripPage() {
 			// Use environment variable for API URL
 			const res = await fetch(`${API_URL}/trips/${tripId}`, {
 				method: "PUT",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
 					title: title.trim(),

@@ -93,7 +93,6 @@ async function generateMetadata({ params }) {
 	const { tripId } = params;
 	try {
 		// Fetch minimal trip data for meta tags.
-		// This fetch happens on the server and won't have a user token,
 		// so it will only succeed for public trips or if the endpoint allows unauthenticated access for public data.
 		const res = await fetch(`${API_URL}/trips/${tripId}`);
 
@@ -170,7 +169,11 @@ export default function TripDetailPage() {
 	const params = useParams();
 	const router = useRouter();
 	const { tripId } = params;
-	const { user: loggedInUser, token, loading: authLoading } = useAuth();
+	const {
+		user: loggedInUser,
+		isAuthenticated,
+		loading: authLoading,
+	} = useAuth();
 
 	const preferredUnits = loggedInUser?.settings?.preferredUnits || "metric";
 	const userSettings = loggedInUser?.settings || {
@@ -214,7 +217,7 @@ export default function TripDetailPage() {
 		if (authLoading) {
 			return;
 		}
-		if (!token) {
+		if (!isAuthenticated) {
 			setLoading(false);
 			return;
 		}
@@ -223,10 +226,10 @@ export default function TripDetailPage() {
 				setLoading(true);
 				setError("");
 				try {
-					// Add Authorization header if token exists
-					const headers = token ? { Authorization: `Bearer ${token}` } : {};
 					// Use relative URL if proxying is set up, else full URL
-					const res = await fetch(`${API_URL}/trips/${tripId}`, { headers });
+					const res = await fetch(`${API_URL}/trips/${tripId}`, {
+						credentials: "include",
+					});
 					const data = await res.json();
 
 					if (!res.ok) {
@@ -253,7 +256,7 @@ export default function TripDetailPage() {
 			setError("Trip ID missing."); // Should not happen normally
 			setLoading(false);
 		}
-	}, [tripId, token, authLoading, loggedInUser]); // Re-fetch if tripId changes
+	}, [tripId, isAuthenticated, authLoading, loggedInUser]); // Re-fetch if tripId changes
 
 	const fetchComments = useCallback(async () => {
 		if (!tripId) return;
@@ -374,7 +377,7 @@ export default function TripDetailPage() {
 			return; // User cancelled
 		}
 
-		if (!token) {
+		if (!isAuthenticated) {
 			setError("Authentication error: Cannot delete trip.");
 			setIsDeleting(false); // Reset state
 			return;
@@ -386,9 +389,7 @@ export default function TripDetailPage() {
 		try {
 			const res = await fetch(`${API_URL}/trips/${tripId}`, {
 				method: "DELETE",
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
+				credentials: "include",
 			});
 
 			// Check if response is ok OR if it's a 204 No Content
@@ -425,7 +426,7 @@ export default function TripDetailPage() {
 
 	// --- Like/Unlike Handler ---
 	const handleLikeToggle = async () => {
-		if (!loggedInUser || !token) {
+		if (!loggedInUser || !isAuthenticated) {
 			alert("Please log in to like trips.");
 			return;
 		}
@@ -438,7 +439,7 @@ export default function TripDetailPage() {
 		try {
 			const res = await fetch(url, {
 				method: method,
-				headers: { Authorization: `Bearer ${token}` },
+				credentials: "include",
 			});
 			const data = await res.json();
 
@@ -484,7 +485,7 @@ export default function TripDetailPage() {
 	};
 
 	const handleDeleteComment = async (commentId) => {
-		if (!token) {
+		if (!isAuthenticated) {
 			setCommentsError("Authentication error: Cannot delete comment.");
 			return;
 		}
@@ -494,9 +495,7 @@ export default function TripDetailPage() {
 				`${API_URL}/trips/${tripId}/comments/${commentId}`,
 				{
 					method: "DELETE",
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
+					credentials: "include",
 				}
 			);
 			console.log("Delete comment response:", res);
@@ -1181,7 +1180,7 @@ export default function TripDetailPage() {
 										<AddCommentForm
 											tripId={tripId}
 											onCommentAdded={handleCommentAdded} // Pass callback
-											token={token} // Pass token
+											token={isAuthenticated}
 										/>
 									)}
 									{!loggedInUser && (

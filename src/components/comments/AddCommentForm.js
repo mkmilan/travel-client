@@ -6,7 +6,7 @@ export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 	const [text, setText] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
-
+	//token is passed from trip page as isAuthenticated
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		if (!text.trim() || !token || !tripId) {
@@ -24,9 +24,9 @@ export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 		try {
 			const res = await fetch(`${API_URL}/trips/${tripId}/comments`, {
 				method: "POST",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({ text: text.trim() }),
 			});

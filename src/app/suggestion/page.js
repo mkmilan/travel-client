@@ -2,6 +2,7 @@
 
 import React, { useState, Fragment } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { API_URL } from "@/utils/config";
 import Link from "next/link";
 import {
@@ -25,7 +26,8 @@ const suggestionCategories = [
 ];
 
 export default function SuggestionPage() {
-	const { user, token } = useAuth();
+	const { user, isAuthenticated } = useAuth();
+	const router = useRouter();
 	const [selectedFeedbackType, setSelectedFeedbackType] = useState(
 		feedbackTypes[0]
 	);
@@ -65,9 +67,9 @@ export default function SuggestionPage() {
 
 			const response = await fetch(`${API_URL}/suggestions`, {
 				method: "POST",
+				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
-					...(token && { Authorization: `Bearer ${token}` }),
 				},
 				body: JSON.stringify(payload),
 			});
@@ -88,6 +90,7 @@ export default function SuggestionPage() {
 			setError(err.message || "An unexpected error occurred.");
 		} finally {
 			setIsSubmitting(false);
+			router.push("/about");
 		}
 	};
 

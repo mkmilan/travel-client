@@ -13,16 +13,25 @@ const ErrorComponent = ({ message }) => (
 );
 
 export default function MyTripsPage() {
-	const { token } = useAuth();
+	// const { token } = useAuth();
+	const { user, isAuthenticated } = useAuth();
 	const [trips, setTrips] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
+	console.log("user", user);
+	console.log("isAuthenticated", isAuthenticated);
 
 	useEffect(() => {
-		if (!token) {
-			// Should be handled by ProtectedRoute, but good safety check
-			setError("Not authorized.");
+		// if (!token) {
+		// 	// Should be handled by ProtectedRoute, but good safety check
+		// 	setError("Not authorized.");
+		// 	setLoading(false);
+		// 	return;
+		// }
+		if (!isAuthenticated) {
+			setError("Not authorized. Please log in."); // More user-friendly message
 			setLoading(false);
+			// router.push('/login'); // Or redirect, though ProtectedRoute should do this
 			return;
 		}
 
@@ -32,9 +41,11 @@ export default function MyTripsPage() {
 			try {
 				const res = await fetch(`${API_URL}/trips/me`, {
 					// Relative URL
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
+					credentials: "include",
+					// headers: {
+					// 	// Authorization: `Bearer ${token}`,
+
+					// },
 				});
 				const data = await res.json();
 				if (!res.ok) {
@@ -52,7 +63,8 @@ export default function MyTripsPage() {
 		};
 
 		fetchMyTrips();
-	}, [token]); // Re-fetch if token changes (e.g., after login)
+		// }, [token]); // Re-fetch if token changes (e.g., after login)
+	}, [isAuthenticated]); // Re-fetch if token changes (e.g., after login)
 
 	if (loading) return <LoadingComponent />;
 	if (error) return <ErrorComponent message={error} />;
