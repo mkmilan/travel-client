@@ -26,7 +26,7 @@ const suggestionCategories = [
 ];
 
 export default function SuggestionPage() {
-	const { user, isAuthenticated } = useAuth();
+	const { user, isAuthenticated, csrfToken } = useAuth();
 	const router = useRouter();
 	const [selectedFeedbackType, setSelectedFeedbackType] = useState(
 		feedbackTypes[0]
@@ -70,6 +70,7 @@ export default function SuggestionPage() {
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify(payload),
 			});

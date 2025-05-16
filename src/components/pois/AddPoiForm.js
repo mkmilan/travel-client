@@ -24,7 +24,7 @@ export default function AddPoiForm({
 	onPoiAdded, // Callback function after successful addition
 	onCancel, // Function to close the modal/form
 }) {
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, csrfToken } = useAuth();
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
@@ -68,6 +68,7 @@ export default function AddPoiForm({
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify({
 					name: formData.name,

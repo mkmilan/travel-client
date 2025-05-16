@@ -1,91 +1,58 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/utils/config";
+import { apiClient } from "@/utils/apiClient";
 
 export default function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
-	const [loading, setLoading] = useState(false);
-	const { login } = useAuth();
+	const [submitLoading, setSubmitLoading] = useState(false);
+	const { login, csrfToken, loading: authLoading } = useAuth();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError("");
-		setLoading(true);
+		setSubmitLoading(true);
+
+		if (!csrfToken && !authLoading) {
+			setError(
+				"Security token is not available. Please wait a moment or refresh the page."
+			);
+			setSubmitLoading(false);
+			return;
+		}
+		if (!email || !password) {
+			setError("Please provide email and password.");
+			setSubmitLoading(false);
+			return;
+		}
 
 		try {
-			// Client-side validation
-			if (!email || !password) {
-				setError("Please provide email and password.");
-				setLoading(false);
-				return;
-			}
-			console.log("API_URL", API_URL);
-
-			// Make API Call
-			const res = await fetch(`${API_URL}/auth/login`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
+			console.log("before sending csrf token to backend csrfToken:", csrfToken);
+			// Use apiClient
+			const data = await apiClient(
+				"/auth/login", // Endpoint
+				{
+					// Options
+					method: "POST",
+					body: { email, password },
 				},
-				body: JSON.stringify({ email, password }),
-				credentials: "include", // Include cookies in the request
-				// Add timeout to prevent hanging requests
-				signal: AbortSignal.timeout(10000), // 10 second timeout
-			});
-
-			// Always try to parse JSON, but handle cases where response isn't JSON
-			let data;
-			try {
-				data = await res.json();
-			} catch (parseError) {
-				// If response is not JSON (e.g. server down, network error before response)
-				// Try to get text for more info if possible
-				const textResponse = await res
-					.text()
-					.catch(() => "Server returned non-JSON response.");
-				console.error("Login API response error, body:", textResponse);
-				throw new Error("Unable to connect to server. Please try again later.");
-			}
-
-			if (!res.ok) {
-				// Handle specific error cases with friendlier messages
-				if (res.status === 401) {
-					throw new Error(
-						data.message || "Invalid email or password. Please try again."
-					);
-				} else if (res.status === 400) {
-					throw new Error(
-						data.message || "Please check your information and try again."
-					);
-				} else if (res.status >= 500) {
-					throw new Error(
-						data.message || "Server error. Please try again later."
-					);
-				} else {
-					throw new Error(data.message || `Error: ${res.status}`);
-				}
-			}
+				csrfToken // Pass the CSRF token
+			);
 
 			console.log("Login successful user data :", data);
-			// login(data, data.token);
 			login(data);
 		} catch (err) {
-			// Handle network errors specifically
-			if (err.name === "AbortError") {
-				setError("Login request timed out. Please try again.");
-			} else {
-				setError(
-					err.message || "An unexpected error occurred. Please try again."
-				);
-			}
+			// apiClient should throw an error with a message
+			setError(
+				err.message || "An unexpected error occurred. Please try again."
+			);
 			console.error("Login failed:", err);
 		} finally {
-			// Always reset loading state, whether successful or not
-			setLoading(false);
+			setSubmitLoading(false);
 		}
 	};
 
@@ -159,10 +126,10 @@ export default function LoginPage() {
 					<div>
 						<button
 							type="submit"
-							disabled={loading}
+							disabled={submitLoading || authLoading || !csrfToken}
 							className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 						>
-							{loading ? "Signing in..." : "Sign in"}
+							{submitLoading ? "Signing in..." : "Sign in"}
 						</button>
 					</div>
 				</form>

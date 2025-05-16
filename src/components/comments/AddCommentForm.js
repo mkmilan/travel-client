@@ -1,11 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { API_URL } from "@/utils/config";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 	const [text, setText] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
+	const { csrfToken } = useAuth();
+
 	//token is passed from trip page as isAuthenticated
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -27,6 +30,7 @@ export default function AddCommentForm({ tripId, onCommentAdded, token }) {
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify({ text: text.trim() }),
 			});

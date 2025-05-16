@@ -39,6 +39,7 @@ import {
 	getTravelModeName,
 } from "@/utils/getTravelModeIcon";
 import { API_URL, SITE_URL } from "@/utils/config";
+import { apiClient } from "@/utils/apiClient";
 import ProfilePicture from "@/components/ProfilePicture";
 import LikersModal from "@/components/trips/LikersModal";
 import Modal from "@/components/Modal";
@@ -94,7 +95,13 @@ async function generateMetadata({ params }) {
 	try {
 		// Fetch minimal trip data for meta tags.
 		// so it will only succeed for public trips or if the endpoint allows unauthenticated access for public data.
-		const res = await fetch(`${API_URL}/trips/${tripId}`);
+		const res = await fetch(`${API_URL}/trips/${tripId}`, {
+			credentials: "include",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRF-Token": csrfToken,
+			},
+		});
 
 		if (!res.ok) {
 			console.error(
@@ -173,6 +180,7 @@ export default function TripDetailPage() {
 		user: loggedInUser,
 		isAuthenticated,
 		loading: authLoading,
+		csrfToken,
 	} = useAuth();
 
 	const preferredUnits = loggedInUser?.settings?.preferredUnits || "metric";
@@ -229,6 +237,10 @@ export default function TripDetailPage() {
 					// Use relative URL if proxying is set up, else full URL
 					const res = await fetch(`${API_URL}/trips/${tripId}`, {
 						credentials: "include",
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRF-Token": csrfToken,
+						},
 					});
 					const data = await res.json();
 
@@ -264,7 +276,13 @@ export default function TripDetailPage() {
 		setCommentsLoading(true);
 		setCommentsError("");
 		try {
-			const res = await fetch(`${API_URL}/trips/${tripId}/comments`);
+			const res = await fetch(`${API_URL}/trips/${tripId}/comments`, {
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
+			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || "Failed to fetch comments");
 			setComments(data); // Set the fetched comments
@@ -286,7 +304,14 @@ export default function TripDetailPage() {
 			setRecommendationsError("");
 			try {
 				const response = await fetch(
-					`${API_URL}/trips/${tripId}/recommendations`
+					`${API_URL}/trips/${tripId}/recommendations`,
+					{
+						credentials: "include",
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRF-Token": csrfToken,
+						},
+					}
 				);
 				if (!response.ok) {
 					throw new Error("Failed to fetch recommendations");
@@ -390,6 +415,10 @@ export default function TripDetailPage() {
 			const res = await fetch(`${API_URL}/trips/${tripId}`, {
 				method: "DELETE",
 				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 
 			// Check if response is ok OR if it's a 204 No Content
@@ -440,6 +469,10 @@ export default function TripDetailPage() {
 			const res = await fetch(url, {
 				method: method,
 				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 			const data = await res.json();
 
@@ -469,7 +502,13 @@ export default function TripDetailPage() {
 		setLikers([]); // Clear previous likers
 
 		try {
-			const res = await fetch(`${API_URL}/trips/${tripId}/likers`);
+			const res = await fetch(`${API_URL}/trips/${tripId}/likers`, {
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
+			});
 			const data = await res.json();
 			if (!res.ok) {
 				throw new Error(data.message || "Failed to fetch likers");
@@ -496,6 +535,10 @@ export default function TripDetailPage() {
 				{
 					method: "DELETE",
 					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRF-Token": csrfToken,
+					},
 				}
 			);
 			console.log("Delete comment response:", res);

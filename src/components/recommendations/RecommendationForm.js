@@ -55,7 +55,7 @@ export default function RecommendationForm({
 	isModal = false,
 }) {
 	const router = useRouter();
-	const { isAuthenticated } = useAuth();
+	const { isAuthenticated, csrfToken } = useAuth();
 	const [formData, setFormData] = useState({
 		name: initialData.name || "",
 		description: initialData.description || "",
@@ -106,7 +106,12 @@ export default function RecommendationForm({
 				setRouteError("");
 				setTripRouteGeoJson(null); // Reset previous route
 				try {
-					const response = await fetch(`${API_URL}/trips/${associatedTripId}`);
+					const response = await fetch(`${API_URL}/trips/${associatedTripId}`, {
+						credentials: "include",
+						headers: {
+							"X-CSRF-Token": csrfToken,
+						},
+					});
 					if (!response.ok) {
 						throw new Error("Failed to fetch trip route data");
 					}
@@ -255,14 +260,6 @@ export default function RecommendationForm({
 		});
 
 		try {
-			// const response = await fetch(`${API_URL}/recommendations`, {
-			// 	method: "POST",
-			// 	headers: {
-			// 		Authorization: `Bearer ${token}`,
-			// 		// 'Content-Type': 'multipart/form-data' is set automatically by browser with FormData
-			// 	},
-			// 	body: submissionData,
-			// });
 			// Determine API endpoint and method based on isEditing
 			const apiUrl = isEditing
 				? `${API_URL}/recommendations/${initialData._id}` // Ensure initialData has _id when editing
@@ -272,6 +269,9 @@ export default function RecommendationForm({
 			const response = await fetch(apiUrl, {
 				method: method,
 				credentials: "include",
+				headers: {
+					"X-CSRF-Token": csrfToken,
+				},
 				body: submissionData,
 			});
 

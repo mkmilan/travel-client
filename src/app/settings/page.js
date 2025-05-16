@@ -58,6 +58,7 @@ const UserSettingsPage = () => {
 		loading: authLoading,
 		setUser: setAuthUser,
 		isAuthenticated,
+		csrfToken,
 	} = useAuth();
 	const router = useRouter();
 
@@ -82,6 +83,10 @@ const UserSettingsPage = () => {
 		try {
 			const res = await fetch(`${API_URL}/users/settings`, {
 				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 			const data = await res.json();
 			if (!res.ok) {
@@ -124,6 +129,7 @@ const UserSettingsPage = () => {
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify(settings),
 			});

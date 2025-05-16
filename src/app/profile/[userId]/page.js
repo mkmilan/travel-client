@@ -44,6 +44,7 @@ const UserListItem = ({
 	loggedInUserId,
 	isAuthenticated,
 	onFollowUpdate,
+	csrfToken,
 }) => {
 	// const {isAuthenticated} = useAuth();
 	const [isFollowing, setIsFollowing] = useState(
@@ -62,7 +63,10 @@ const UserListItem = ({
 			const res = await fetch(url, {
 				method: method,
 				credentials: "include",
-				// headers: { Authorization: `Bearer ${token}` },
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || "Follow action failed");
@@ -118,7 +122,7 @@ const UserListItem = ({
 
 // --- Follow List Modal Implementation ---
 const FollowListModal = ({ isOpen, onClose, userId, type }) => {
-	const { user: loggedInUser, token, isAuthenticated } = useAuth();
+	const { user: loggedInUser, isAuthenticated, csrfToken } = useAuth();
 	const [list, setList] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -141,10 +145,10 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 					// These endpoints should return an array of user objects with at least _id, username, profilePictureUrl, and followers array
 					const res = await fetch(`${API_URL}/users/${userId}/${endpoint}`, {
 						credentials: "include",
-						// headers: {
-						// 	// Send token if the endpoint needs it (e.g., to check follow status relative to logged-in user)
-						// 	...(token && { Authorization: `Bearer ${token}` }),
-						// },
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRF-Token": csrfToken,
+						},
 					});
 					const data = await res.json();
 
@@ -197,9 +201,9 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 							key={user._id}
 							user={user}
 							loggedInUserId={loggedInUser?._id}
-							// token={token}
 							onFollowUpdate={handleFollowUpdateInModal}
 							isAuthenticated={isAuthenticated}
+							csrfToken={csrfToken}
 						/>
 					))}
 					{/* Add pagination controls here if implementing */}
@@ -210,7 +214,7 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 };
 
 // --- Recommendations Modal Implementation ---
-const RecommendationsModal = ({ isOpen, onClose, userId }) => {
+const RecommendationsModal = ({ isOpen, onClose, userId, csrfToken }) => {
 	const [recommendations, setRecommendations] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -229,8 +233,13 @@ const RecommendationsModal = ({ isOpen, onClose, userId }) => {
 		try {
 			// Fetch from GET /api/users/:userId/recommendations
 			const res = await fetch(
-				`${API_URL}/users/${userId}/recommendations?page=${pageNum}&limit=${limit}`
-				// `${API_URL}/users/${userId}/recommendations`
+				`${API_URL}/users/${userId}/recommendations?page=${pageNum}&limit=${limit}`,
+				{
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRF-Token": csrfToken,
+					},
+				}
 			);
 			const data = await res.json();
 			console.log("Recommendations data:", data.data);
@@ -353,7 +362,7 @@ const PoiListItem = ({ poi, userSettings }) => {
 	);
 };
 
-const PoisModal = ({ isOpen, onClose, userId }) => {
+const PoisModal = ({ isOpen, onClose, userId, csrfToken }) => {
 	const [pois, setPois] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -362,14 +371,20 @@ const PoisModal = ({ isOpen, onClose, userId }) => {
 	const [totalCount, setTotalCount] = useState(0);
 	const limit = 15; // Number of POIs per page
 
-	const fetchPois = async (pageNum = 1) => {
+	const fetchPois = async (pageNum = 1, csrfToken) => {
 		if (!userId) return;
 		setLoading(true);
 		setError("");
 		try {
 			// Fetch from GET /api/users/:userId/pois
 			const res = await fetch(
-				`${API_URL}/users/${userId}/pois?page=${pageNum}&limit=${limit}`
+				`${API_URL}/users/${userId}/pois?page=${pageNum}&limit=${limit}`,
+				{
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRF-Token": csrfToken,
+					},
+				}
 			);
 			const data = await res.json();
 
@@ -520,7 +535,7 @@ const PhotoViewerModal = ({
 export default function ProfilePage() {
 	const params = useParams();
 	const { userId } = params;
-	const { user, token, loading: authLoading, isAuthenticated } = useAuth();
+	const { user, loading: authLoading, isAuthenticated, csrfToken } = useAuth();
 	const [profileData, setProfileData] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -556,7 +571,13 @@ export default function ProfilePage() {
 				setLoading(true);
 				setError("");
 				try {
-					const res = await fetch(`${API_URL}/users/${userId}`);
+					const res = await fetch(`${API_URL}/users/${userId}`, {
+						credentials: "include",
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRF-Token": csrfToken,
+						},
+					});
 					const data = await res.json();
 
 					if (!res.ok) {
@@ -599,7 +620,7 @@ export default function ProfilePage() {
 	// Wait for both auth check and profile fetch to finish
 	const isOwnProfile = useMemo(() => {
 		return !authLoading && loggedInUser && loggedInUser._id === userId;
-	}, [authLoading, loggedInUser, userId]);
+	}, [authLoading, loggedInUser, userId, csrfToken]);
 
 	// --- Follow/Unfollow Handlers ---
 	const handleFollowToggle = async () => {
@@ -619,7 +640,6 @@ export default function ProfilePage() {
 			const res = await fetch(url, {
 				method: method,
 				credentials: "include",
-				// headers: { Authorization: `Bearer ${token}` },
 			});
 			const data = await res.json();
 
@@ -1003,6 +1023,7 @@ export default function ProfilePage() {
 				onClose={() => setIsPoisModalOpen(false)}
 				userId={userId}
 				userSettings={userSettings}
+				csrfToken={csrfToken}
 			/>
 
 			<PhotoViewerModal

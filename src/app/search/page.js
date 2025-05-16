@@ -130,7 +130,7 @@ const RecommendationResultItem = ({ recommendation }) => (
 );
 
 export default function SearchPage() {
-	const { user: loggedInUser, isAuthenticated } = useAuth();
+	const { user: loggedInUser, isAuthenticated, csrfToken } = useAuth();
 	const [searchTerm, setSearchTerm] = useState("");
 	const [results, setResults] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -169,6 +169,10 @@ export default function SearchPage() {
 					)}&type=${searchType}`,
 					{
 						credentials: "include",
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRF-Token": csrfToken,
+						},
 					}
 				);
 				const data = await res.json();
@@ -220,6 +224,10 @@ export default function SearchPage() {
 			const res = await fetch(url, {
 				method: method,
 				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 			const data = await res.json();
 

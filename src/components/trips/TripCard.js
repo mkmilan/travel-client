@@ -33,7 +33,7 @@ const MiniMap = dynamic(() => import("@/components/map/MiniMap"), {
 });
 
 export default function TripCard({ trip }) {
-	const { user: loggedInUser, isAuthenticated } = useAuth();
+	const { user: loggedInUser, isAuthenticated, csrfToken } = useAuth();
 	const [localLikesCount, setLocalLikesCount] = useState(trip?.likesCount || 0);
 	const [isLikedByMe, setIsLikedByMe] = useState(false); // We need a way to determine initial state
 	const [likeInProgress, setLikeInProgress] = useState(false);
@@ -77,6 +77,10 @@ export default function TripCard({ trip }) {
 			const res = await fetch(url, {
 				method: method,
 				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 			const data = await res.json(); // Backend returns new count
 

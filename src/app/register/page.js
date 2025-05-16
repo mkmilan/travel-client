@@ -13,7 +13,7 @@ export default function RegisterPage() {
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
-	const { login } = useAuth();
+	const { login, csrfToken } = useAuth();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault(); // Prevent default form submission
@@ -38,6 +38,7 @@ export default function RegisterPage() {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify({ username, email, password }),
 				credentials: "include", // Important: allows server to set cookie

@@ -82,6 +82,7 @@ export default function EditTripPage() {
 		user: loggedInUser,
 		isAuthenticated,
 		loading: authLoading,
+		csrfToken,
 	} = useAuth();
 
 	// Form state for details
@@ -119,6 +120,9 @@ export default function EditTripPage() {
 			// Fetch the specific trip using the environment variable
 			const res = await fetch(`${API_URL}/trips/${tripId}`, {
 				credentials: "include",
+				headers: {
+					"X-CSRF-Token": csrfToken,
+				},
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.message || "Failed to fetch trip data");
@@ -220,6 +224,9 @@ export default function EditTripPage() {
 			const res = await fetch(`${API_URL}/trips/${tripId}/photos`, {
 				method: "POST",
 				credentials: "include",
+				headers: {
+					"X-CSRF-Token": csrfToken,
+				},
 				body: formData,
 			});
 			const data = await res.json();
@@ -264,8 +271,9 @@ export default function EditTripPage() {
 				{
 					method: "DELETE",
 					credentials: "include",
-					// Add a timeout parameter for the fetch request
-					// signal: AbortSignal.timeout(5000), // 10 second timeout for the network request
+					headers: {
+						"X-CSRF-Token": csrfToken,
+					},
 				}
 			);
 			// Allow 200 or 204, try parse body for potential error message
@@ -314,6 +322,7 @@ export default function EditTripPage() {
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify({
 					title: title.trim(),

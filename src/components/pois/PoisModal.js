@@ -57,7 +57,7 @@ const PoiListItem = ({ poi, userSettings }) => {
 };
 
 const PoisModal = ({ isOpen, onClose, userId }) => {
-	const { user } = useAuth();
+	const { user, csrfToken } = useAuth();
 	const [pois, setPois] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -78,7 +78,13 @@ const PoisModal = ({ isOpen, onClose, userId }) => {
 		try {
 			// Fetch from GET /api/users/:userId/pois
 			const res = await fetch(
-				`${API_URL}/users/${userId}/pois?page=${pageNum}&limit=${limit}`
+				`${API_URL}/users/${userId}/pois?page=${pageNum}&limit=${limit}`,
+				{
+					credentials: "include",
+					headers: {
+						"X-CSRF-Token": csrfToken,
+					},
+				}
 			);
 			const data = await res.json();
 

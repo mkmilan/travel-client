@@ -50,7 +50,7 @@ const StaticStarRating = ({ rating }) => {
 export default function RecommendationDetailPage() {
 	const params = useParams();
 	const { recommendationId } = params;
-	const { loggedInUser, token } = useAuth(); // For potential edit/delete later
+	const { loggedInUser, isAuthenticated, csrfToken } = useAuth(); // For potential edit/delete later
 	const userSettings = loggedInUser?.settings || {
 		dateFormat: "YYYY-MM-DD",
 		timeFormat: "24h",
@@ -72,7 +72,14 @@ export default function RecommendationDetailPage() {
 			setError("");
 			try {
 				const response = await fetch(
-					`${API_URL}/recommendations/${recommendationId}`
+					`${API_URL}/recommendations/${recommendationId}`,
+					{
+						credentials: "include",
+						headers: {
+							"Content-Type": "application/json",
+							"X-CSRF-Token": csrfToken,
+						},
+					}
 				);
 				if (!response.ok) {
 					const errData = await response.json();

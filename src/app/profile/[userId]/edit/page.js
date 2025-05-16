@@ -21,10 +21,10 @@ export default function EditProfilePage() {
 	const router = useRouter();
 	const {
 		user: loggedInUser,
-		token,
 		loading: authLoading,
 		setUser,
 		isAuthenticated,
+		csrfToken,
 	} = useAuth();
 
 	const [bio, setBio] = useState("");
@@ -134,6 +134,9 @@ export default function EditProfilePage() {
 			const res = await fetch(`${API_URL}/users/me`, {
 				method: "PUT",
 				credentials: "include",
+				headers: {
+					"X-CSRF-Token": csrfToken,
+				},
 				body: formData, // Send FormData object
 			});
 

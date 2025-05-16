@@ -17,7 +17,7 @@ import { API_URL } from "@/utils/config";
 import { FaMapMarkerAlt, FaSpinner, FaPlusCircle } from "react-icons/fa";
 
 export default function NewTripPage() {
-	const { isAuthenticated, user } = useAuth();
+	const { isAuthenticated, user, csrfToken } = useAuth();
 	const router = useRouter();
 	const tracker = useGpsTracker();
 
@@ -120,6 +120,7 @@ export default function NewTripPage() {
 				credentials: "include",
 				headers: {
 					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
 				},
 				body: JSON.stringify({
 					...formDataFromSaveForm, // title, description, start/end names
@@ -225,6 +226,9 @@ export default function NewTripPage() {
 							const recRes = await fetch(`${API_URL}/recommendations`, {
 								method: "POST",
 								credentials: "include",
+								headers: {
+									"X-CSRF-Token": csrfToken,
+								},
 								body: recFormData,
 							});
 							const recResult = await recRes.json();
