@@ -47,6 +47,8 @@ import CommentList from "@/components/comments/CommentList";
 import RecommendationList from "@/components/recommendations/RecommendationList";
 import AddCommentForm from "@/components/comments/AddCommentForm";
 import AddPoiForm from "@/components/pois/AddPoiForm";
+import LoadingComponent from "@/components/LoadingComponent";
+
 import {
 	Menu,
 	MenuButton,
@@ -66,14 +68,6 @@ const TripMap = dynamic(() => import("@/components/map/TripMap"), {
 		</div>
 	), // Optional loading indicator
 });
-
-// Simple Loading Component
-const LoadingComponent = () => (
-	<div className="flex justify-center items-center h-screen">
-		<p>Loading trip details...</p>
-		{/* Or use a spinner */}
-	</div>
-);
 
 // Simple Error Component
 const ErrorComponent = ({ message }) => (

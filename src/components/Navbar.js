@@ -81,7 +81,11 @@ export default function Navbar() {
 					href={isAuthenticated ? "/feed" : "/"}
 					className="text-xl font-bold text-primary hover:text-primary-dark transition-colors"
 				>
-					Mapper
+					<img
+						src="/rom3.svg"
+						alt="Romify"
+						className="h-12 w-auto" // Adjusted size
+					/>
 				</Link>
 
 				{/* Desktop Navigation / Actions (Hidden on Mobile) */}

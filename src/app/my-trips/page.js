@@ -6,11 +6,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TripCard from "@/components/trips/TripCard";
 import { API_URL } from "@/utils/config";
-// Loading/Error components can be reused or defined locally
-const LoadingComponent = () => <p>Loading your trips...</p>;
-const ErrorComponent = ({ message }) => (
-	<p className="text-red-500">Error: {message}</p>
-);
+import LoadingComponent from "@/components/LoadingComponent";
+import ErrorComponent from "@/components/ErrorComponent";
 
 export default function MyTripsPage() {
 	const { user, isAuthenticated, csrfToken } = useAuth();

@@ -30,19 +30,8 @@ import {
 } from "react-icons/fa";
 import Image from "next/image";
 import { API_URL } from "@/utils/config";
-
-// Loading/Error components
-const LoadingComponent = () => (
-	<div className="flex justify-center items-center py-10">
-		<p>Loading trip data for editing...</p>
-		{/* You can add a spinner here */}
-	</div>
-);
-const ErrorComponent = ({ message }) => (
-	<div className="text-center py-10">
-		<p className="text-red-500 font-medium">Error: {message}</p>
-	</div>
-);
+import LoadingComponent from "@/components/LoadingComponent";
+import ErrorComponent from "@/components/ErrorComponent";
 
 const visibilityOptions = [
 	{

@@ -7,13 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { API_URL } from "@/utils/config";
 import Image from "next/image";
-
-// Simple loading indicator
-const LoadingSpinner = () => (
-	<div className="flex justify-center items-center h-64">
-		<div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-	</div>
-);
+import LoadingComponent from "@/components/LoadingComponent";
 
 export default function EditProfilePage() {
 	const params = useParams();
@@ -180,7 +174,7 @@ export default function EditProfilePage() {
 	return (
 		<ProtectedRoute>
 			{initialLoading ? (
-				<LoadingSpinner />
+				<LoadingComponent />
 			) : error && !success ? (
 				<p className="text-red-600 text-center mt-10">{error}</p>
 			) : (

@@ -47,36 +47,7 @@ export default function FeedPage() {
 		}
 	}, [isAuthenticated]);
 
-	// return (
-	// 	<ProtectedRoute>
-	// 		{" "}
-	// 		{/* Protect this page */}
-	// 		<div>
-	// 			<h1 className="text-3xl font-bold mb-4">Main Feed</h1>
-	// 			{user ? (
-	// 				<p className="">
-	// 					Welcome back, {user.username}! This is your main feed (content
-	// 					coming soon).
-	// 				</p>
-	// 			) : (
-	// 				<p className="">Loading user data...</p>
-	// 			)}
-	// 			{/* TODO: Fetch and display trips from followed users */}
-	// 			<div className="mt-6 space-y-4">
-	// 				{/* Placeholder for trip cards */}
-	// 				<div className="p-4 bg-white rounded shadow border border-gray-200 text-gray-700">
-	// 					Trip Card 1 Placeholder
-	// 				</div>
-	// 				<div className="p-4 bg-white rounded shadow border border-gray-200 text-gray-700">
-	// 					Trip Card 2 Placeholder
-	// 				</div>
-	// 			</div>
-	// 		</div>
-	// 	</ProtectedRoute>
-	// );
 	const renderContent = () => {
-		// if (loading) return <LoadingComponent />;
-		// if (error) return <ErrorComponent message={error} />;
 		if (feedTrips.length === 0) {
 			// TODO: Add better empty state - maybe suggest finding users to follow
 			return (

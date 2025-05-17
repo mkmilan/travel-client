@@ -24,19 +24,13 @@ import {
 import { API_URL } from "@/utils/config";
 import ProfilePicture from "@/components/ProfilePicture";
 import Modal from "@/components/Modal";
+import LoadingComponent from "@/components/LoadingComponent";
 // import PoisModal from "@/components/pois/PoisModal";
 import {
 	formatDistance,
 	formatDuration,
 	formatDateTime,
 } from "@/utils/formatters";
-
-// Placeholder loading component
-const LoadingSpinner = () => (
-	<div className="flex justify-center items-center h-64">
-		<div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-	</div>
-);
 
 // --- User Item for the List ---
 const UserListItem = ({
@@ -189,7 +183,7 @@ const FollowListModal = ({ isOpen, onClose, userId, type }) => {
 			title={type === "followers" ? "Followers" : "Following"}
 			size="sm" // Small size is usually appropriate for user lists
 		>
-			{loading && <LoadingSpinner />}
+			{loading && <LoadingComponent />}
 			{error && <p className="text-red-500 p-4 text-center">{error}</p>}
 			{!loading && !error && list.length === 0 && (
 				<p className="text-gray-500 p-4 text-center">No {type} found.</p>
@@ -302,7 +296,7 @@ const RecommendationsModal = ({ isOpen, onClose, userId, csrfToken }) => {
 					))}
 
 				{/* Loading indicator for initial load or load more */}
-				{loading && <LoadingSpinner />}
+				{loading && <LoadingComponent />}
 
 				{/* No results message */}
 				{!loading && recommendations.length === 0 && !error && (
@@ -442,7 +436,7 @@ const PoisModal = ({ isOpen, onClose, userId, csrfToken }) => {
 					))}
 
 				{/* Loading indicator */}
-				{loading && <LoadingSpinner />}
+				{loading && <LoadingComponent />}
 
 				{/* No results message */}
 				{!loading && pois.length === 0 && !error && (
@@ -719,7 +713,7 @@ export default function ProfilePage() {
 	};
 	// --- Render Logic ---
 	if (loading || authLoading) {
-		return <LoadingSpinner />;
+		return <LoadingComponent />;
 	}
 
 	if (error) {
@@ -977,7 +971,7 @@ export default function ProfilePage() {
 							{photosLoading &&
 								!userPhotos.length && ( // Show spinner only if loading and no photos yet
 									<div className="flex items-center justify-center w-full h-40">
-										<LoadingSpinner />
+										<LoadingComponent />
 									</div>
 								)}
 						</div>

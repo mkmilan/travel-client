@@ -1,0 +1,76 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 512 512"
+  width="300"
+  height="300"
+>
+  <defs>
+    <style>
+      :root{
+        --pin-blue:  #4d89b8;   
+        --pin-edge:  #2b6c9d;   
+        --white:     #ffffff;
+      }
+    </style>
+  </defs>
+
+  <!-- ─────────── PIN SHAPE ─────────── -->
+  <!-- outer “drop” -->
+  <path
+    d="
+      M256 32
+      C156.7 32 76 112.7 76 212      <!-- circular part -->
+      C76 347 240 489 246 495         <!-- taper down to the point -->
+      a12 12 0 0 0 20 0
+      C272 489 436 347 436 212
+      C436 112.7 355.3 32 256 32
+      Z"
+    fill="var(--pin-blue)"
+    stroke="var(--pin-edge)"
+    stroke-width="8"
+  />
+
+  <!-- inner white area with a gentle wave on the bottom -->
+  <path
+    d="
+      M136 220
+      C196 260 316 260 376 220        <!-- the wave -->
+      L376 180
+      A120 120 0 1 0 136 180          <!-- big circle -->
+      Z"
+    fill="var(--white)"
+  />
+
+  <!-- ─────────── CAMPER VAN ─────────── -->
+  <g transform="translate(156 180)">
+    <!-- van body -->
+    <path
+      d="
+        M0 40                                <!-- back left -->
+        H152 l28 24 v36                     <!-- roof + front nose -->
+        H0 Z"
+      fill="var(--pin-blue)"
+    />
+    <!-- roof box -->
+    <rect x="32" y="0" width="72" height="28" rx="6" fill="var(--pin-blue)"/>
+
+    <!-- windows -->
+    <rect x="12"  y="48" width="44" height="22" rx="3" fill="var(--white)"/>
+    <rect x="62"  y="48" width="44" height="22" rx="3" fill="var(--white)"/>
+    <rect x="112" y="48" width="40" height="22" rx="3" fill="var(--white)"/>
+
+    <!-- door -->
+    <rect x="62" y="74" width="34" height="34" rx="3" fill="var(--white)"/>
+    <rect x="100" y="74" width="12" height="4" fill="var(--pin-blue)"/>
+
+    <!-- wheels -->
+    <!-- left -->
+    <circle cx="44"  cy="120" r="20" fill="var(--pin-blue)"/>
+    <circle cx="44"  cy="120" r="10" fill="var(--white)"/>
+    <!-- right -->
+    <circle cx="124" cy="120" r="20" fill="var(--pin-blue)"/>
+    <circle cx="124" cy="120" r="10" fill="var(--white)"/>
+  </g>
+
+</svg>
+
