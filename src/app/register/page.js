@@ -12,6 +12,7 @@ export default function RegisterPage() {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
+	const [successMessage, setSuccessMessage] = useState("");
 	const router = useRouter();
 	const { login, csrfToken } = useAuth();
 
@@ -19,6 +20,7 @@ export default function RegisterPage() {
 		e.preventDefault(); // Prevent default form submission
 		setError(""); // Clear previous errors
 		setLoading(true);
+		setSuccessMessage("");
 
 		// Basic client-side validation
 		if (!username || !email || !password) {
@@ -56,9 +58,15 @@ export default function RegisterPage() {
 			// // Optional: Show a success message before redirecting
 			// router.push(`/login`); // Redirect to login page on success
 			console.log("Registration successful, user data:", data);
+			setSuccessMessage(data.message);
+			setUsername("");
+			setEmail("");
+			setPassword("");
 			// Automatically log the user in by calling the context's login method
 			// The 'data' here is the user object from the backend
-			login(data); // Redirect handled by login function in AuthContext
+
+			// login(data); // Redirect handled by login function in AuthContext
+			router.push(`/login`);
 		} catch (err) {
 			// --- Handle Errors ---
 			console.error("Registration failed:", err);
