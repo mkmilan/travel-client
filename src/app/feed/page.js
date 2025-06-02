@@ -4,6 +4,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/context/AuthContext";
 import TripCard from "@/components/trips/TripCard";
 import { API_URL } from "@/utils/config";
+import LoadingComponent from "@/components/LoadingComponent";
 
 export default function FeedPage() {
 	const { user, isAuthenticated, csrfToken } = useAuth();
@@ -84,7 +85,15 @@ export default function FeedPage() {
 				<h1 className="text-xl text-center font-bold text-gray-900 mb-6">
 					Feed
 				</h1>
-				{renderContent()}
+				{loading ? (
+					<LoadingComponent />
+				) : error ? (
+					<div className="text-center py-10 text-red-500 bg-white p-6 shadow border border-gray-200">
+						<p>Error: {error}</p>
+					</div>
+				) : (
+					renderContent()
+				)}
 			</div>
 		</ProtectedRoute>
 	);

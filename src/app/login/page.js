@@ -1,29 +1,38 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react"; // Removed useEffect as it's not used here
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/utils/config";
-import { apiClient } from "@/utils/apiClient";
+// apiClient is imported but not used in the handleSubmit, per your existing code.
+// If you intend to use apiClient, the handleSubmit logic would change.
+// import { apiClient } from "@/utils/apiClient";
 
 export default function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const [submitLoading, setSubmitLoading] = useState(false);
-	const { login, csrfToken, loading: authLoading } = useAuth();
+	const { login, csrfToken, loading: authContextLoading } = useAuth(); // authContextLoading is the combined loading state from AuthContext
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setError("");
 		setSubmitLoading(true);
 
-		if (!csrfToken && !authLoading) {
-			setError(
-				"Security token is not available. Please wait a moment or refresh the page."
-			);
+		// Check if AuthContext is still loading initial data (CSRF token, user status)
+		if (authContextLoading) {
+			setError("Authentication system is initializing. Please wait a moment and try again.");
 			setSubmitLoading(false);
 			return;
 		}
+
+		// Check if CSRF token is available after AuthContext has finished loading
+		if (!csrfToken) {
+			setError("Security token is not available. Please refresh the page and try again.");
+			setSubmitLoading(false);
+			return;
+		}
+
 		if (!email || !password) {
 			setError("Please provide email and password.");
 			setSubmitLoading(false);
@@ -31,25 +40,29 @@ export default function LoginPage() {
 		}
 
 		try {
-			console.log("before sending csrf token to backend csrfToken:", csrfToken);
-			// Use apiClient
-			const data = await apiClient(
-				"/auth/login", // Endpoint
-				{
-					// Options
-					method: "POST",
-					body: { email, password },
-				},
-				csrfToken // Pass the CSRF token
-			);
+			console.log("Login attempt: Sending CSRF token to backend:", csrfToken);
 
-			console.log("Login successful user data :", data);
-			login(data);
+			const res = await fetch(`${API_URL}/auth/login`, {
+				method: "POST",
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": csrfToken,
+				},
+				body: JSON.stringify({ email, password }),
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				// If response status is not 2xx, throw an error with the message from backend
+				throw new Error(data.message || `HTTP error! status: ${res.status}`);
+			}
+
+			console.log("Login successful, user data:", data);
+			login(data); // login function from AuthContext handles user state update and redirect
 		} catch (err) {
-			// apiClient should throw an error with a message
-			setError(
-				err.message || "An unexpected error occurred. Please try again."
-			);
+			setError(err.message || "An unexpected error occurred. Please try again.");
 			console.error("Login failed:", err);
 		} finally {
 			setSubmitLoading(false);
@@ -59,18 +72,10 @@ export default function LoginPage() {
 	return (
 		<div className="flex items-center justify-center min-h-screen bg-gray-100">
 			<div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
-				<h2 className="text-2xl font-bold text-center text-gray-900">
-					Sign in to your account
-				</h2>
-				<form
-					className="space-y-6"
-					onSubmit={handleSubmit}
-				>
+				<h2 className="text-2xl font-bold text-center text-gray-900">Sign in to your account</h2>
+				<form className="space-y-6" onSubmit={handleSubmit}>
 					<div>
-						<label
-							htmlFor="email"
-							className="block text-sm font-medium text-gray-700"
-						>
+						<label htmlFor="email" className="block text-sm font-medium text-gray-700">
 							Email address
 						</label>
 						<input
@@ -85,17 +90,14 @@ export default function LoginPage() {
 						/>
 					</div>
 					<div>
-						<label
-							htmlFor="password"
-							className="block text-sm font-medium text-gray-700"
-						>
+						<label htmlFor="password" className="block text-sm font-medium text-gray-700">
 							Password
 						</label>
 						<input
 							id="password"
 							name="password"
 							type="password"
-							autoComplete="current-password" // Hint for password managers
+							autoComplete="current-password"
 							required
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
@@ -126,7 +128,7 @@ export default function LoginPage() {
 					<div>
 						<button
 							type="submit"
-							disabled={submitLoading || authLoading || !csrfToken}
+							disabled={submitLoading || authContextLoading || (!csrfToken && !authContextLoading)} // Disable if submitting, or if auth context is loading, or if csrfToken is not available AND auth context is done loading
 							className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 						>
 							{submitLoading ? "Signing in..." : "Sign in"}
@@ -134,19 +136,13 @@ export default function LoginPage() {
 					</div>
 				</form>
 				<p className="text-sm text-center text-gray-600">
-					Don't have an account?{" "}
-					<Link
-						href="/register"
-						className="font-medium text-indigo-600 hover:text-indigo-500"
-					>
+					Don&apos;t have an account?{" "}
+					<Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
 						Sign up
 					</Link>
 				</p>
 				<p className="mt-2 text-sm text-center text-gray-600">
-					<Link
-						href="/forgot-password"
-						className="font-medium text-indigo-600 hover:text-indigo-500"
-					>
+					<Link href="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
 						Forgot your password?
 					</Link>
 				</p>

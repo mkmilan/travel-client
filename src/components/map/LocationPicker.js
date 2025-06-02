@@ -63,32 +63,6 @@ const poiIcon = new L.Icon({
 	popupAnchor: [1, -34],
 });
 
-// function LocationMarker({ position, setPosition, onLocationSelect }) {
-
-// 	const map = useMapEvents({
-// 		click(e) {
-// 			const { lat, lng } = e.latlng;
-// 			setPosition([lat, lng]);
-// 			if (onLocationSelect) {
-// 				onLocationSelect(lat, lng);
-// 			}
-// 			// Optional: Fly to the new marker location
-// 			map.flyTo(e.latlng, map.getZoom());
-// 		},
-// 		// Optional: Update location on dragend if marker is draggable
-// 		locationfound(e) {
-// 			setPosition(e.latlng);
-// 			map.flyTo(e.latlng, map.getZoom());
-// 		},
-// 	});
-
-// 	return position === null ? null : (
-// 		<Marker
-// 			position={position}
-// 			icon={poiIcon}
-// 		></Marker>
-// 	);
-// }
 // --- Marker Placer Component ---
 function LocationMarker({ position, setPosition, onLocationSelect }) {
 	const [markerPosition, setMarkerPosition] = useState(position);

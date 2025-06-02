@@ -1,11 +1,5 @@
 "use client";
-import React, {
-	createContext,
-	useState,
-	useContext,
-	useEffect,
-	useCallback,
-} from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/utils/config";
 
@@ -15,96 +9,98 @@ const AuthContext = createContext(null);
 // Create a provider component
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
-	const [loading, setLoading] = useState(true);
 	const [csrfToken, setCsrfToken] = useState(null);
-	const [csrfLoading, setCsrfLoading] = useState(true);
+	const [loading, setLoading] = useState(true); // Combined loading state for initial auth and CSRF
 	const router = useRouter();
 
-	// Function to fetch CSRF token
-	const fetchCsrfToken = useCallback(async () => {
-		console.log("AuthContext: Fetching CSRF token...");
-		setCsrfLoading(true);
+	const initializeAuth = useCallback(async () => {
+		console.log("AuthContext: Initializing authentication and CSRF token...");
+		setLoading(true);
 		try {
-			const res = await fetch(`${API_URL}/csrf-token`, {
+			// 1. Fetch CSRF token
+			try {
+				const csrfRes = await fetch(`${API_URL}/csrf-token`, {
+					credentials: "include",
+				});
+				if (!csrfRes.ok) {
+					const errorData = await csrfRes.json().catch(() => ({}));
+					console.error("AuthContext: Failed to fetch CSRF token", errorData.message || csrfRes.status);
+					setCsrfToken(null);
+				} else {
+					const csrfData = await csrfRes.json();
+					setCsrfToken(csrfData.csrfToken);
+					console.log("AuthContext: CSRF token fetched successfully.");
+				}
+			} catch (csrfErr) {
+				console.error("AuthContext: Error during CSRF token fetch:", csrfErr);
+				setCsrfToken(null);
+			}
+
+			// 2. Check user status
+			// Attempt to load user from localStorage for faster UI render
+			const storedUserData = localStorage.getItem("userData");
+			if (storedUserData) {
+				try {
+					const parsedUser = JSON.parse(storedUserData);
+					setUser(parsedUser);
+					console.log("AuthContext: User state pre-loaded from localStorage.");
+				} catch (error) {
+					console.error("AuthContext: Failed to parse user data from localStorage", error);
+					localStorage.removeItem("userData"); // Clear corrupted data
+				}
+			}
+
+			// Verify with backend
+			const authRes = await fetch(`${API_URL}/auth/me`, {
+				method: "GET",
 				credentials: "include",
 			});
-			if (!res.ok) {
-				const errorData = await res.json().catch(() => ({}));
-				throw new Error(
-					errorData.message || `Failed to fetch CSRF token (${res.status})`
-				);
-			}
-			const data = await res.json();
-			setCsrfToken(data.csrfToken);
-			console.log("AuthContext: CSRF token fetched successfully.");
-		} catch (err) {
-			console.error("AuthContext: CSRF token fetch error:", err);
-			setCsrfToken(null); // Set to null on error
-			// Potentially show a global error or retry
-		} finally {
-			setCsrfLoading(false);
-		}
-	}, []);
 
-	// Effect to fetch CSRF token on initial load
+			if (authRes.ok) {
+				const userData = await authRes.json();
+				console.log("AuthContext: User verified with backend:", userData);
+				setUser(userData);
+				localStorage.setItem("userData", JSON.stringify(userData));
+			} else {
+				console.log("AuthContext: No active session found with backend or error.", authRes.status);
+				setUser(null); // Ensure user is null if /me fails
+				localStorage.removeItem("userData");
+			}
+		} catch (error) {
+			console.error("AuthContext: Error during auth initialization (CSRF or /me call):", error);
+			setUser(null);
+			// setCsrfToken(null); // CSRF might have been set, or failed; keep as is unless specific error
+			localStorage.removeItem("userData");
+		} finally {
+			setLoading(false);
+			console.log("AuthContext: Auth initialization complete.");
+		}
+	}, []); // No dependencies, runs once on mount
+
 	useEffect(() => {
-		fetchCsrfToken();
-	}, [fetchCsrfToken]);
+		initializeAuth();
+	}, [initializeAuth]);
 
 	// Function to handle login
 	const login = (userData) => {
 		console.log("AuthContext: Logging in user", userData);
-
 		setUser(userData);
 		localStorage.setItem("userData", JSON.stringify(userData));
-		router.push(`/feed`);
+		router.push(`/feed`); // Or your desired redirect path
 	};
 
-	// const logout = async () => {
-	// 	console.log("AuthContext: Logging out user...");
-	// 	try {
-	// 		await fetch(`${API_URL}/auth/logout`, {
-	// 			method: "POST",
-	// 			headers: {
-	// 				// Important for backend to process if it expects JSON, though not strictly needed for this simple logout
-	// 				"Content-Type": "application/json",
-	// 			},
-	// 			credentials: "include", // Crucial: send cookies with the request
-	// 		});
-	// 	} catch (error) {
-	// 		console.error("AuthContext: Logout API call failed", error);
-	// 		// Still proceed with client-side cleanup
-	// 	} finally {
-	// 		localStorage.removeItem("userData");
-	// 		setUser(null);
-	// 		console.log("AuthContext: User logged out, client state cleared.");
-	// 		router.push(`/`);
-	// 	}
-	// };
 	const logout = async () => {
 		console.log("AuthContext: Logging out user...");
-		if (!csrfToken && !csrfLoading) {
-			// If CSRF token is definitely not available and not loading, try fetching it again
-			// Or handle this case more gracefully, e.g. by warning the user or delaying logout
-			console.warn(
-				"AuthContext: CSRF token not available for logout. Attempting to fetch."
-			);
-			await fetchCsrfToken(); // Attempt to fetch it if missing
-			// Re-check after attempting fetch, though this might introduce slight delay
-			if (!csrfToken) {
-				console.error(
-					"AuthContext: CSRF token still not available after re-fetch. Proceeding logout without it, which might fail."
-				);
-				// Decide if you want to proceed or block logout if CSRF is critical
-			}
-		}
+		const tokenForLogout = csrfToken; // Use current CSRF token
 
 		try {
-			const headers = {
-				"Content-Type": "application/json",
-			};
-			if (csrfToken) {
-				headers["X-CSRF-Token"] = csrfToken;
+			const headers = { "Content-Type": "application/json" };
+			if (tokenForLogout) {
+				headers["X-CSRF-Token"] = tokenForLogout;
+			} else {
+				console.warn(
+					"AuthContext: CSRF token not available for logout. Logout might fail if CSRF is strictly enforced by server for this route."
+				);
 			}
 
 			await fetch(`${API_URL}/auth/logout`, {
@@ -114,106 +110,54 @@ export const AuthProvider = ({ children }) => {
 			});
 		} catch (error) {
 			console.error("AuthContext: Logout API call failed", error);
+			// Still proceed to clear client-side state
 		} finally {
 			localStorage.removeItem("userData");
 			setUser(null);
-			setCsrfToken(null); // Clear CSRF token on logout
-			fetchCsrfToken(); // Fetch a new CSRF token for the new (unauthenticated) session
-			console.log("AuthContext: User logged out, client state cleared.");
-			router.push(`/`);
-		}
-	};
+			// setCsrfToken(null); // Clear old CSRF token
 
-	// Effect to check authentication status on initial load or refresh
-	useEffect(() => {
-		const checkUserStatus = async () => {
-			console.log("AuthContext: Checking auth status on load...");
-			setLoading(true);
-			// Attempt to load user from localStorage for faster UI render
-			const storedUserData = localStorage.getItem("userData");
-			if (storedUserData) {
-				try {
-					const parsedUser = JSON.parse(storedUserData);
-					setUser(parsedUser);
-					console.log("AuthContext: User state pre-loaded from localStorage.");
-				} catch (error) {
-					console.error(
-						"AuthContext: Failed to parse user data from localStorage",
-						error
-					);
-					localStorage.removeItem("userData"); // Clear corrupted data
-				}
-			}
-
+			// Fetch a new CSRF token for the new (unauthenticated) session
+			console.log("AuthContext: Fetching new CSRF token post-logout...");
 			try {
-				// Verify with backend
-				const res = await fetch(`${API_URL}/auth/me`, {
-					method: "GET",
+				const csrfRes = await fetch(`${API_URL}/csrf-token`, {
 					credentials: "include",
 				});
-
-				if (res.ok) {
-					const data = await res.json();
-					console.log("AuthContext: User verified with backend:", data);
-					setUser(data);
-					localStorage.setItem("userData", JSON.stringify(data)); // Update localStorage
+				if (!csrfRes.ok) {
+					setCsrfToken(null);
 				} else {
-					console.log(
-						"AuthContext: No active session found with backend or error.",
-						res.status
-					);
-					// If /me fails (e.g. 401), clear user state if it was pre-loaded
-					if (user) {
-						// Check if user was pre-loaded
-						setUser(null);
-						localStorage.removeItem("userData");
-					}
+					const csrfData = await csrfRes.json();
+					setCsrfToken(csrfData.csrfToken);
+					console.log("AuthContext: New CSRF token fetched post-logout.");
 				}
-			} catch (error) {
-				console.error(
-					"AuthContext: Error checking user status with backend",
-					error
-				);
-				// If network error, and user was pre-loaded, keep it for now, or decide on UX
-				// For simplicity, if /me fails for any reason, treat as logged out
-				if (user) {
-					setUser(null);
-					localStorage.removeItem("userData");
-				}
-			} finally {
-				setLoading(false);
-				console.log("AuthContext: Auth status check complete.");
+			} catch (fetchErr) {
+				console.error("AuthContext: Failed to fetch new CSRF token post-logout.", fetchErr);
+				setCsrfToken(null);
 			}
-		};
-
-		checkUserStatus();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+			console.log("AuthContext: User logged out, client state cleared.");
+			router.push(`/`); // Redirect to home/login
+		}
+	};
 
 	// Value provided by the context
 	const authContextValue = {
 		user,
-		loading, // Expose loading state
+		csrfToken,
+		loading, // Combined loading state
+		isAuthenticated: !!user,
 		login,
 		logout,
-		isAuthenticated: !!user,
-		setUser,
-		csrfToken,
-		fetchCsrfToken, // Expose function to manually refresh token if needed
+		setUser, // If needed for direct manipulation elsewhere
+		// fetchCsrfToken: initializeAuth, // If manual re-init is ever needed
 	};
 
-	return (
-		<AuthContext.Provider value={authContextValue}>
-			{/* Don't render children until initial auth check is done */}
-			{!(loading || csrfLoading) && children}
-		</AuthContext.Provider>
-	);
+	return <AuthContext.Provider value={authContextValue}>{!loading && children}</AuthContext.Provider>;
 };
 
 // Custom hook to easily use the auth context
 export const useAuth = () => {
 	const context = useContext(AuthContext);
-	if (context === undefined) {
+	if (context === undefined || context === null) {
+		// Added null check for safety
 		throw new Error("useAuth must be used within an AuthProvider");
 	}
 	return context;
