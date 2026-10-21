@@ -19,7 +19,7 @@ import { FaMapMarkerAlt, FaSpinner, FaPlusCircle } from "react-icons/fa";
 export default function NewTripPage() {
 	const { isAuthenticated, user, csrfToken } = useAuth();
 	const router = useRouter();
-	const tracker = useGpsTracker();
+	const tracker = useGpsTracker(user?._id || user?.id);
 
 	// State for the save operation itself
 	const [isSaving, setIsSaving] = useState(false);

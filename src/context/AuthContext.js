@@ -2,6 +2,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/utils/config";
+import { requestLogout } from "@/utils/logout.mjs";
 
 // Create the context
 const AuthContext = createContext(null);
@@ -10,6 +11,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
 	const [user, setUser] = useState(null);
 	const [csrfToken, setCsrfToken] = useState(null);
+	const [logoutError, setLogoutError] = useState("");
 	const [loading, setLoading] = useState(true); // Combined loading state for initial auth and CSRF
 	const router = useRouter();
 
@@ -90,52 +92,25 @@ export const AuthProvider = ({ children }) => {
 	};
 
 	const logout = async () => {
-		console.log("AuthContext: Logging out user...");
-		const tokenForLogout = csrfToken; // Use current CSRF token
-
+		setLogoutError("");
 		try {
-			const headers = { "Content-Type": "application/json" };
-			if (tokenForLogout) {
-				headers["X-CSRF-Token"] = tokenForLogout;
-			} else {
-				console.warn(
-					"AuthContext: CSRF token not available for logout. Logout might fail if CSRF is strictly enforced by server for this route."
-				);
-			}
-
-			await fetch(`${API_URL}/auth/logout`, {
-				method: "POST",
-				headers: headers,
-				credentials: "include",
-			});
+			await requestLogout({ apiUrl: API_URL, csrfToken });
 		} catch (error) {
-			console.error("AuthContext: Logout API call failed", error);
-			// Still proceed to clear client-side state
-		} finally {
-			localStorage.removeItem("userData");
-			setUser(null);
-			// setCsrfToken(null); // Clear old CSRF token
-
-			// Fetch a new CSRF token for the new (unauthenticated) session
-			console.log("AuthContext: Fetching new CSRF token post-logout...");
-			try {
-				const csrfRes = await fetch(`${API_URL}/csrf-token`, {
-					credentials: "include",
-				});
-				if (!csrfRes.ok) {
-					setCsrfToken(null);
-				} else {
-					const csrfData = await csrfRes.json();
-					setCsrfToken(csrfData.csrfToken);
-					console.log("AuthContext: New CSRF token fetched post-logout.");
-				}
-			} catch (fetchErr) {
-				console.error("AuthContext: Failed to fetch new CSRF token post-logout.", fetchErr);
-				setCsrfToken(null);
-			}
-			console.log("AuthContext: User logged out, client state cleared.");
-			router.push(`/`); // Redirect to home/login
+			// Do not claim logout succeeded while an HttpOnly session may remain valid.
+			setLogoutError(error.message);
+			return false;
 		}
+		localStorage.removeItem("userData");
+		setUser(null);
+		setCsrfToken(null);
+		try {
+			const response = await fetch(`${API_URL}/csrf-token`, { credentials: "include" });
+			if (response.ok) setCsrfToken((await response.json()).csrfToken);
+		} catch {
+			// Logout succeeded; a later login can refresh the CSRF token.
+		}
+		router.push(`/`);
+		return true;
 	};
 
 	// Value provided by the context
@@ -150,7 +125,12 @@ export const AuthProvider = ({ children }) => {
 		// fetchCsrfToken: initializeAuth, // If manual re-init is ever needed
 	};
 
-	return <AuthContext.Provider value={authContextValue}>{!loading && children}</AuthContext.Provider>;
+	return (
+		<AuthContext.Provider value={authContextValue}>
+			{logoutError && <p role="alert" className="bg-red-100 p-3 text-red-900">{logoutError}</p>}
+			{!loading && <React.Fragment key={user?._id || user?.id || "anonymous"}>{children}</React.Fragment>}
+		</AuthContext.Provider>
+	);
 };
 
 // Custom hook to easily use the auth context

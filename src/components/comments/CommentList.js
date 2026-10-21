@@ -2,7 +2,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ApiAwareImage";
 import { FaTrash } from "react-icons/fa";
 import ProfilePicture from "../ProfilePicture";
 import { formatDateTime } from "@/utils/formatters";

@@ -28,7 +28,7 @@ import {
 	FaQuestionCircle, // For 'other'
 	FaChevronDown,
 } from "react-icons/fa";
-import Image from "next/image";
+import Image from "@/components/ApiAwareImage";
 import { API_URL } from "@/utils/config";
 import LoadingComponent from "@/components/LoadingComponent";
 import ErrorComponent from "@/components/ErrorComponent";
@@ -522,6 +522,7 @@ export default function EditTripPage() {
 								>
 									{/* Use img tag directly for simplicity if Next optimization isn't needed for dynamic src */}
 									<img
+										crossOrigin="use-credentials"
 										src={`${API_URL}/photos/${photoId}`} // Construct full URL
 										alt={`Existing trip photo`}
 										className="object-cover w-full h-full "

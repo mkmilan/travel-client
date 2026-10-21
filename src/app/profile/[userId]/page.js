@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useMemo, use } from "react";
 import { useParams } from "next/navigation";
 import RecommendationCard from "@/components/recommendations/RecommendationCard";
-import Image from "next/image";
+import Image from "@/components/ApiAwareImage";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import {

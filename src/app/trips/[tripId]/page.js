@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ApiAwareImage";
 import dynamic from "next/dynamic";
 import {
 	FaHeart,

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/utils/config";
+import { apiPhotoImageProps } from "@/utils/mediaPolicy.mjs";
 import {
 	FaSearch,
 	FaUserPlus,
@@ -31,6 +32,7 @@ const UserResultItem = ({
 			className="flex items-center space-x-3 no-underline text-gray-800 hover:text-blue-600"
 		>
 			<img
+				crossOrigin={apiPhotoImageProps(user.profilePictureUrl, API_URL).crossOrigin}
 				src={user.profilePictureUrl || "/default-avatar.png"}
 				alt={user.username}
 				className="w-10 h-10 rounded-full object-cover"

@@ -18,7 +18,7 @@ const geoOptions = {
 	maximumAge: 5000,
 };
 
-export function useGpsTracker() {
+export function useGpsTracker(userId) {
 	const [isTracking, setIsTracking] = useState(false);
 	const [isPaused, setIsPaused] = useState(false);
 	const [trackedPoints, setTrackedPoints] = useState([]);
@@ -66,18 +66,18 @@ export function useGpsTracker() {
 				}),
 			};
 			try {
-				await saveSessionToDB(sessionData);
+				await saveSessionToDB(sessionData, userId);
 			} catch (error) {
 				console.error("Error saving track points to IndexedDB:", error);
 				setTrackingError(error.message || "Could not save track progress.");
 			}
 		},
-		[] // No state dependencies needed here as args are passed
+		[userId]
 	);
 
 	const clearSavedTrack = useCallback(async () => {
 		try {
-			await deleteSessionFromDB();
+			await deleteSessionFromDB(userId);
 		} catch (error) {
 			console.error("Error clearing session from DB:", error);
 			// Proceed with state reset even if DB clear fails
@@ -93,14 +93,16 @@ export function useGpsTracker() {
 		setNeedsSaving(false);
 		setTrackingError("");
 		console.log("Cleared saved track from IndexedDB and reset state.");
-	}, []);
+	}, [userId]);
 
 	// Load on Mount
 	useEffect(() => {
+		let cancelled = false;
 		const loadInitialData = async () => {
 			console.log("useGpsTracker: Checking IndexedDB...");
 			setIsInitializing(true);
-			const savedSession = await getSessionFromDB();
+			const savedSession = await getSessionFromDB(userId);
+			if (cancelled) return;
 
 			if (savedSession) {
 				console.log(
@@ -166,6 +168,7 @@ export function useGpsTracker() {
 		};
 
 		loadInitialData();
+		return () => { cancelled = true; };
 		// Run only once on mount
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [clearSavedTrack]); // Include clearSavedTrack as it's used

@@ -5,7 +5,12 @@ import { openDB } from "idb";
 const DB_NAME = "trackingDB";
 const STORE_NAME = "currentTrack";
 const VERSION = 1; // Increment this if schema changes
-const SESSION_KEY = "activeSession"; // Fixed key for the single active session
+// Never restore the legacy unowned activeSession entry into a signed-in account.
+// Retain it untouched for a deliberate recovery flow rather than assigning ownership.
+const sessionKey = (userId) => {
+	if (typeof userId !== "string" || !userId.trim()) throw new Error("A signed-in user is required for tracking storage.");
+	return `activeSession:${userId}`;
+};
 
 // Function to open the database
 const openTrackingDB = () => {
@@ -28,10 +33,10 @@ const openTrackingDB = () => {
  * Saves the current tracking session state to IndexedDB.
  * @param {object} sessionData - The data object for the active session.
  */
-export const saveSessionToDB = async (sessionData) => {
+export const saveSessionToDB = async (sessionData, userId) => {
 	try {
 		const db = await openTrackingDB();
-		await db.put(STORE_NAME, sessionData, SESSION_KEY);
+		await db.put(STORE_NAME, sessionData, sessionKey(userId));
 		// console.log("Session saved to IndexedDB:", sessionData);
 	} catch (error) {
 		console.error("Error saving session to IndexedDB:", error);
@@ -44,10 +49,11 @@ export const saveSessionToDB = async (sessionData) => {
  * Retrieves the active tracking session state from IndexedDB.
  * @returns {Promise<object|null>} The saved session data or null if not found.
  */
-export const getSessionFromDB = async () => {
+export const getSessionFromDB = async (userId) => {
+	if (!userId) return null;
 	try {
 		const db = await openTrackingDB();
-		const sessionData = await db.get(STORE_NAME, SESSION_KEY);
+		const sessionData = await db.get(STORE_NAME, sessionKey(userId));
 		// console.log("Session retrieved from IndexedDB:", sessionData);
 		return sessionData || null;
 	} catch (error) {
@@ -59,10 +65,11 @@ export const getSessionFromDB = async () => {
 /**
  * Deletes the active tracking session state from IndexedDB.
  */
-export const deleteSessionFromDB = async () => {
+export const deleteSessionFromDB = async (userId) => {
+	if (!userId) return;
 	try {
 		const db = await openTrackingDB();
-		await db.delete(STORE_NAME, SESSION_KEY);
+		await db.delete(STORE_NAME, sessionKey(userId));
 		console.log("Session deleted from IndexedDB.");
 	} catch (error) {
 		console.error("Error deleting session from IndexedDB:", error);

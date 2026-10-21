@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { API_URL } from "@/utils/config";
-import Image from "next/image";
+import Image from "@/components/ApiAwareImage";
 import LoadingComponent from "@/components/LoadingComponent";
 
 export default function EditProfilePage() {

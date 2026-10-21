@@ -6,14 +6,15 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.2",
     "date-fns": "^4.1.0",
     "idb": "^8.0.2",
     "leaflet": "^1.9.4",
-    "next": "15.2.4",
+    "next": "15.5.28",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
@@ -24,6 +25,7 @@
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/leaflet": "^1.9.17",
+    "fake-indexeddb": "^6.2.6",
     "tailwind-scrollbar": "^4.0.2",
     "tailwindcss": "^4"
   }
