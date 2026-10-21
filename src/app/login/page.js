@@ -40,7 +40,7 @@ export default function LoginPage() {
 		}
 
 		try {
-			console.log("Login attempt: Sending CSRF token to backend:", csrfToken);
+
 
 			const res = await fetch(`${API_URL}/auth/login`, {
 				method: "POST",
@@ -59,7 +59,7 @@ export default function LoginPage() {
 				throw new Error(data.message || `HTTP error! status: ${res.status}`);
 			}
 
-			console.log("Login successful, user data:", data);
+
 			login(data); // login function from AuthContext handles user state update and redirect
 		} catch (err) {
 			setError(err.message || "An unexpected error occurred. Please try again.");

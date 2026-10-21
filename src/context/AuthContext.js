@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/utils/config";
 import { requestLogout } from "@/utils/logout.mjs";
+import { publicUserProfile } from "@/utils/publicUserProfile.mjs";
 
 // Create the context
 const AuthContext = createContext(null);
@@ -38,19 +39,9 @@ export const AuthProvider = ({ children }) => {
 				setCsrfToken(null);
 			}
 
-			// 2. Check user status
-			// Attempt to load user from localStorage for faster UI render
-			const storedUserData = localStorage.getItem("userData");
-			if (storedUserData) {
-				try {
-					const parsedUser = JSON.parse(storedUserData);
-					setUser(parsedUser);
-					console.log("AuthContext: User state pre-loaded from localStorage.");
-				} catch (error) {
-					console.error("AuthContext: Failed to parse user data from localStorage", error);
-					localStorage.removeItem("userData"); // Clear corrupted data
-				}
-			}
+			// Remove legacy cached responses, which could include a bearer token.
+			// The HttpOnly cookie and /auth/me are the only browser session authority.
+			localStorage.removeItem("userData");
 
 			// Verify with backend
 			const authRes = await fetch(`${API_URL}/auth/me`, {
@@ -60,9 +51,9 @@ export const AuthProvider = ({ children }) => {
 
 			if (authRes.ok) {
 				const userData = await authRes.json();
-				console.log("AuthContext: User verified with backend:", userData);
-				setUser(userData);
-				localStorage.setItem("userData", JSON.stringify(userData));
+
+				setUser(publicUserProfile(userData));
+
 			} else {
 				console.log("AuthContext: No active session found with backend or error.", authRes.status);
 				setUser(null); // Ensure user is null if /me fails
@@ -85,9 +76,9 @@ export const AuthProvider = ({ children }) => {
 
 	// Function to handle login
 	const login = (userData) => {
-		console.log("AuthContext: Logging in user", userData);
-		setUser(userData);
-		localStorage.setItem("userData", JSON.stringify(userData));
+		localStorage.removeItem("userData");
+		setUser(publicUserProfile(userData));
+
 		router.push(`/feed`); // Or your desired redirect path
 	};
 

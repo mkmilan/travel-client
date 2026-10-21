@@ -50,3 +50,17 @@ test('media credentials policy does not apply to unrelated hosts or static image
   assert.deepEqual(apiPhotoImageProps('/default-avatar.png','http://localhost:5001/api'), {});
   assert.deepEqual(apiPhotoImageProps('http://localhost:5001/api/photos/123',undefined), {});
 });
+
+const { publicUserProfile } = await import('../src/utils/publicUserProfile.mjs');
+test('browser user state excludes bearer and future credential fields', () => {
+  const data = {_id:'fixture', username:'Fixture', token:'fixture-bearer', refreshToken:'fixture-refresh', password:'fixture-password'};
+  assert.deepEqual(publicUserProfile(data), {_id:'fixture', username:'Fixture'});
+  assert.equal(publicUserProfile(null), null);
+});
+test('browser authentication never persists login responses or trusts a legacy cache', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../src/context/AuthContext.js', import.meta.url), 'utf8');
+  assert(!source.includes('localStorage.setItem'));
+  assert(!source.includes('localStorage.getItem'));
+  assert(source.includes('localStorage.removeItem("userData")'));
+});

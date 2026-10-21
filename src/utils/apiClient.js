@@ -79,10 +79,7 @@ export const apiClient = async (endpoint, options = {}, csrfToken) => {
 				}
 
 				try {
-					console.log(
-						"before sending csrf token to backend csrfToken:",
-						csrfToken
-					);
+
 					// Use apiClient
 					const data = await apiClient(
 						"/auth/login", // Endpoint
@@ -94,7 +91,7 @@ export const apiClient = async (endpoint, options = {}, csrfToken) => {
 						csrfToken // Pass the CSRF token
 					);
 
-					console.log("Login successful user data :", data);
+
 					login(data);
 				} catch (err) {
 					// apiClient should throw an error with a message
